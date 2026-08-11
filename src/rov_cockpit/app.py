@@ -1,5 +1,7 @@
 """ROV Cockpit web application."""
 
+import csv
+import io
 import json
 import os
 import re
@@ -17,7 +19,7 @@ import nats
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
@@ -35,6 +37,7 @@ NATS_URL = os.getenv("NATS_URL", "nats://127.0.0.1:4222")
 NATS_SUBJECT = os.getenv("NATS_SUBJECT", ">")
 MAP_TILE_PROXY = os.getenv("MAP_TILE_PROXY", "false").lower() == "true"
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(PROJECT_ROOT / "media")))
+CSV_ROOT = Path(os.getenv("CSV_ROOT", str(PROJECT_ROOT / "data" / "csv")))
 STILLS_DIR = MEDIA_ROOT / "stills"
 VIDEOS_DIR = MEDIA_ROOT / "videos"
 MEDIA_MIN_FREE_GB = float(os.getenv("MEDIA_MIN_FREE_GB", "2"))
@@ -92,6 +95,26 @@ def media_files(directory: Path, suffixes: tuple[str, ...]) -> list[Path]:
         key=lambda path: path.stat().st_mtime,
         reverse=True,
     )
+
+
+def csv_files() -> list[Path]:
+    CSV_ROOT.mkdir(parents=True, exist_ok=True)
+    return sorted((path for path in CSV_ROOT.rglob("*.csv") if path.is_file()), key=lambda path: path.stat().st_mtime, reverse=True)
+
+
+def csv_path(filename: str) -> Path:
+    root = CSV_ROOT.resolve()
+    candidate = (CSV_ROOT / filename).resolve()
+    if root != candidate and root not in candidate.parents:
+        raise HTTPException(status_code=400, detail="CSV path is outside the configured data directory")
+    if candidate.suffix.lower() != ".csv" or not candidate.is_file():
+        raise HTTPException(status_code=404, detail="CSV export was not found")
+    return candidate
+
+
+def csv_fields(path: Path) -> list[str]:
+    with path.open("r", newline="", encoding="utf-8-sig") as handle:
+        return csv.DictReader(handle).fieldnames or []
 
 
 def prune_videos() -> None:
@@ -410,6 +433,42 @@ async def files(request: Request):
             "videos": media_files(VIDEOS_DIR, (".mp4", ".avi", ".mkv", ".webm")),
         },
     )
+
+
+@app.get("/data/", response_class=HTMLResponse)
+async def data_page(request: Request):
+    return templates.TemplateResponse(request=request, name="data.jinja", context={"files": [{"name": path.name, "relative": path.relative_to(CSV_ROOT).as_posix()} for path in csv_files()]})
+
+
+@app.get("/api/data/fields")
+async def data_fields(file: str):
+    return {"fields": csv_fields(csv_path(file))}
+
+
+@app.get("/api/data/preview")
+async def data_preview(file: str, sensors: str = "", limit: int = 250):
+    path = csv_path(file)
+    selected = [item for item in sensors.split(",") if item]
+    with path.open("r", newline="", encoding="utf-8-sig") as handle:
+        reader = csv.DictReader(handle)
+        fields = [field for field in (reader.fieldnames or []) if not selected or field in selected]
+        rows = [[row.get(field, "") for field in fields] for row in reader][:max(1, min(limit, 250))]
+    return {"file": path.name, "fields": fields, "rows": rows}
+
+
+@app.get("/api/data/download")
+async def data_download(file: str, sensors: str = ""):
+    path = csv_path(file)
+    selected = [item for item in sensors.split(",") if item]
+    output = io.StringIO(newline="")
+    with path.open("r", newline="", encoding="utf-8-sig") as handle:
+        reader = csv.DictReader(handle)
+        fields = [field for field in (reader.fieldnames or []) if not selected or field in selected]
+        writer = csv.writer(output)
+        writer.writerow(fields)
+        for row in reader:
+            writer.writerow([row.get(field, "") for field in fields])
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{path.stem}-selected.csv"'})
 
 
 @app.get("/api/media/config")

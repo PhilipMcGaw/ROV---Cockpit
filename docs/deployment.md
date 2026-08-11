@@ -46,6 +46,10 @@ Cockpit media is stored below `MEDIA_ROOT` (default: `<project>/media`), with `s
 
 The Cockpit `/files/` page captures stills from the current Motion frame, displays the still gallery, lists recordings, and provides downloads. View-only access is anonymous. Driver/admin login and password management exist, but enforcement of control and every administrative route remains incomplete.
 
+## Sensor CSV data
+
+The Cockpit `/data/` page displays CSV exports stored below `CSV_ROOT` (default: `<Cockpit project>/data/csv`). It discovers the CSV headers as selectable sensor fields, displays a bounded preview of up to 250 rows, and downloads a new CSV containing all rows for the selected fields. The original CSV is never modified. Set `CSV_ROOT` to the Datalogger export directory when the repositories use separate storage locations. This page reads CSV exports; it does not itself create the Datalogger records.
+
 ## Configure Nginx as the Raspberry Pi reverse proxy
 
 Install Nginx on the Raspberry Pi:
@@ -80,6 +84,10 @@ sudo bash scripts/3_configure_nginx.sh
 Run it from the Cockpit repository or provide the script’s absolute path. It creates the Nginx map-cache directory, backs up an existing Cockpit site configuration before replacement, validates Nginx, enables the site, reloads Nginx, and restarts Cockpit. It requires `sudo` because Nginx and systemd are system services; it does not alter shell PATH, the registry, or unrelated user data.
 
 The operator interface is then available at the Raspberry Pi address on HTTP port `80`. Nginx owns browser caching for `/static/`; the Python application does not need to emit no-cache headers for static assets.
+
+The live page includes a separate pitch indicator beside the existing compass, attitude and depth instruments. It shows nose-up or nose-down inclination from `sensor.ahrs.imu.pitch`; it does not substitute a default value when the telemetry is unavailable or invalid.
+
+The live page also includes a separate camera inclination indicator. It listens to `sensor/camera/main/pitch`, expressed in degrees relative to the ROV body, where `0°` is straight ahead. The camera-control implementation must convert its physical 90° servo home position to this representation. Until the topic is supplied by the control system and bench tested, the indicator remains unvalidated.
 
 ### Mobile-link map tile caching
 

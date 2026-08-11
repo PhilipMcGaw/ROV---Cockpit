@@ -410,6 +410,24 @@
             <span id="altimeter"></span>
     </div>
 
+    <div  class="pitch-indicator" id="pitch-indicator"
+        style="position: fixed;
+        right: 620px;
+        bottom: 20px;
+        height: 200px;
+        width: 200px;">
+            <span id="pitch"></span>
+    </div>
+
+    <div class="camera-pitch-indicator" id="camera-pitch-indicator"
+        style="position: fixed;
+        right: 820px;
+        bottom: 20px;
+        height: 200px;
+        width: 200px;">
+            <span id="camera-pitch"></span>
+    </div>
+
 <!-- These Guages are not used:
 
     <div  class="turn_coordinator" id="turn_coordinator"
@@ -450,6 +468,8 @@
             var attitude = $.flightIndicator('#attitude', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
             var heading = $.flightIndicator('#heading', 'heading', {heading:0, showBox: true});
             var altimeter = $.flightIndicator('#altimeter', 'altimeter', {showBox: true});
+            var pitchIndicator = $.flightIndicator('#pitch', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
+            var cameraPitchIndicator = $.flightIndicator('#camera-pitch', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
             var variometer = $.flightIndicator('#variometer', 'variometer', {vario:0, showBox : false});
             var airspeed = $.flightIndicator('#airspeed', 'airspeed', {showBox: false});
             var turn_coordinator = $.flightIndicator('#turn_coordinator', 'turn_coordinator', {turn:0});
@@ -521,13 +541,24 @@
                 }
 
                 if (topic === "sensor/ahrs/imu/pitch") {
-                    attitude.setPitch(50*Math.sin(message.toString()/20));
+                    const pitch = Number(message);
+                    if (Number.isFinite(pitch)) {
+                        attitude.setPitch(pitch);
+                        pitchIndicator.setPitch(pitch);
+                    }
                 }
-                    if (topic === "sensor/ahrs/imu/roll") {
+                if (topic === "sensor/ahrs/imu/roll") {
                     attitude.setRoll(50*Math.sin(message.toString()/10));
                     // TC update - note that the TC appears opposite the angle of the attitude indicator, as it mirrors the actual wing up/down position
                     turn_coordinator.setTurn((30*Math.sin(message.toString()/10))*-1);
-                }                   
+                  }
+
+                if (topic === "sensor/camera/main/pitch") {
+                    const cameraPitch = Number(message);
+                    if (Number.isFinite(cameraPitch)) {
+                        cameraPitchIndicator.setPitch(cameraPitch);
+                    }
+                }
 
                 if (topic === "sensor/water/temperature") {
                     if (tempElement) {

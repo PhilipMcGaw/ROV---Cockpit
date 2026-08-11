@@ -17,6 +17,12 @@ This repository contains the Cockpit web layer only. ROV propulsion/control rema
 
 Camera and media ownership belongs to Cockpit: camera inventory, Motion configuration, Nginx reverse-proxy configuration, still capture, rolling video retention, gallery, and downloads are maintained here. The original monolithic ROV repository must not contain duplicate camera or Nginx configuration.
 
+The Cockpit `/data/` page reads CSV exports from `CSV_ROOT` (default `<project>/data/csv`), permits selection of CSV sensor fields, displays a bounded preview and provides filtered downloads without modifying the source file. Datalogger storage and export production remain Datalogger responsibilities.
+
+The live Cockpit instrument row includes the existing compass, attitude and depth indicators, plus a separate pitch-only attitude indicator for nose-up/nose-down inclination. It uses the NATS subject `sensor.ahrs.imu.pitch` and displays unavailable or non-numeric values without inventing a measurement.
+
+The live instrument row also includes a separate camera inclination indicator. It consumes `sensor/camera/main/pitch`, expressed in degrees relative to the ROV body, where `0°` is straight ahead. The camera-control implementation is responsible for converting its physical 90° servo home position into this representation. The topic and physical correspondence require bench validation before the value is treated as measured camera orientation.
+
 The map supports optional Raspberry Pi Nginx tile caching through `MAP_TILE_PROXY=true` for mobile-link deployments. Local Windows development uses direct provider URLs by default.
 - `requirements.txt` — runtime dependencies, following the project’s TiaB-style dependency workflow.
 - `scripts/` — Windows portable WinPython installation and startup scripts, the project-local POSIX dependency installer, Raspberry Pi provisioning, and the Nginx configuration helper.
