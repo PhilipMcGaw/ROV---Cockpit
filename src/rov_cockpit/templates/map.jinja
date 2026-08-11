@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Map</title>
+    <link rel="stylesheet" href="/static/css/leaflet.css" />
+    <style>
+        html, body { height: 100%; margin: 0; }
+        #map { height: 100vh; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="/static/js/leaflet.js"></script>
+    <script>
+        // Initialize map (change coords/zoom as needed)
+        const map = L.map('map').setView([52.16900980550594, -1.2140212752292743], 19); // 19 is the max zoom for OSM.
+
+        // OpenStreetMap base layer
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // OpenSeaMap seamarks overlay
+        // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
+        const seamarks = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenSeaMap (seamarks) — Data: OpenSeaMap / OpenStreetMap contributors',
+            opacity: 0.9
+        }).addTo(map);
+
+        // Layer control
+        L.control.layers(
+            { 'OpenStreetMap': osm },
+            { 'SeaMarks (OpenSeaMap)': seamarks },
+            { collapsed: false }
+        ).addTo(map);
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!-- End your project here-->
+
+        <!-- Custom scripts -->
+
+        <script type="text/javascript">
+            // Dynamic examples
+
+            var attitude = $.flightIndicator('#attitude', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
+            var heading = $.flightIndicator('#heading', 'heading', {heading:0, showBox: true});
+            var altimeter = $.flightIndicator('#altimeter', 'altimeter', {showBox: true});
+            var variometer = $.flightIndicator('#variometer', 'variometer', {vario:0, showBox : false});
+            var airspeed = $.flightIndicator('#airspeed', 'airspeed', {showBox: false});
+            var turn_coordinator = $.flightIndicator('#turn_coordinator', 'turn_coordinator', {turn:0});
+
+            // this is the way to do the maths    airspeed.setAirSpeed(80+80*Math.sin(increment/10));  // Airspeed update
+            // this is the way to do the maths    variometer.setVario(2*Math.sin(increment/10));       // Vario update
+        </script>
+
+        <script type="text/javascript">
+            // see https://deepwiki.com/mqttjs/MQTT.js/4.1-browser-usage
+            const hostname = location.hostname;
+
+            // Connect to MQTT broker
+            const client = mqtt.connect("ws://" + hostname + ":8084");
+
+            client.on('connect', () => {
+                console.log('Connected to broker');
+                client.subscribe('#');
+            });
+
+            const uptimeElement = document.getElementById("upTime");        // Uptime
+            const voltElement = document.getElementById("batteryVoltage");  // Battery Voltage
+            const socElement = document.getElementById("batteryLevel");     // State of Charge
+            const tempElement = document.getElementById("temperature");     // Water Temperature
+            const depthElement = document.getElementById("depth");          // Depth (this is a positive number…)
+            const compassElement = document.getElementById('compass');      // Compass bearing
+
+            function router(topic, message) {
+                if (topic === "system/uptime") {
+                    if (uptimeElement) {
+                        uptimeElement.innerHTML = "<i class=\"fa-solid fa-hourglass-half\"></i> " + message.toString();
+                    }
+                }
+
+                if (topic === "power/battery/1/voltage") {
+                    if (voltElement) {
+                        voltElement.innerHTML = message.toString() + " V";
+                    }
+                }
+
+                if (topic === "power/battery/1/soc") {
+                    if (socElement) {
+                        batteryLevel = message.toString() * 10;
+                        // less than 20 %
+                        if (batteryLevel < 20) {
+                            batteryIcon = "fa-battery-empty text-danger";
+                        }
+                        // less than 40 % 
+                        else if (batteryLevel < 40) {
+                            batteryIcon = "fa-battery-quarter text-warning";
+                        }
+                        // less than 60 % 
+                        else if (batteryLevel < 60) {
+                            batteryIcon = "fa-battery-half";
+                        }
+                        // less than 80
+                        else if (batteryLevel < 80) {
+                            batteryIcon = "fa-battery-three-quarters";
+                        }
+                        // All other values
+                        else {
+                            batteryIcon = "fa-battery-full text-success";
+                        }
+                        document.getElementById('batteryLevel').innerHTML =  "<i class=\"fas " + batteryIcon + " fa-lg\"></i>";
+                    }
+                }
+
+                if (topic === "sensor/water/depth") {
+                    if (depthElement) {
+                        depthElement.innerHTML = "<i class=\"fa-solid fa-gauge\"></i> -" + (message.toString()/10) + " m";
+                        altimeter.setAltitude(message.toString() * 10);         // This updates the Altimeter (number is in decimeters)
+                    }
+                }
+
+                if (topic === "sensor/ahrs/imu/heading") {
+                    if (compassElement) {
+                        compassElement.innerHTML = "<i class=\"far fa-compass fa-lg\"></i> " + message.toString() + " &deg";
+                        heading.setHeading(message.toString());             // This updates the compass
+                    }
+                }
+
+                if (topic === "sensor/ahrs/imu/pitch") {
+                    attitude.setPitch(50*Math.sin(message.toString()/20));
+                }
+                    if (topic === "sensor/ahrs/imu/roll") {
+                    attitude.setRoll(50*Math.sin(message.toString()/10));
+                    // TC update - note that the TC appears opposite the angle of the attitude indicator, as it mirrors the actual wing up/down position
+                    turn_coordinator.setTurn((30*Math.sin(message.toString()/10))*-1);
+                }                   
+
+                if (topic === "sensor/water/temperature") {
+                    if (tempElement) {
+                        tempElement.innerHTML = "<i class=\"fas fa-thermometer-half fa-lg\"></i>" + message.toString()  + " &deg;C";
+                    }
+                }
+            }
+
+            client.on('message',router);
+        </script>
+    </body>
+</html>

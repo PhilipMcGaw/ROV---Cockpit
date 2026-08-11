@@ -1,0 +1,56 @@
+# Test procedure
+
+Run tests in increasing order of risk. Record the date, software revision, hardware revision, and test result for each session.
+
+## 1. Static checks
+
+```bash
+python -m py_compile Control/main.py Cockpit/app.py
+python -m py_compile Control/main.py Cockpit/app.py Cockpit/auth.py
+```
+
+Confirm that the changed KiCad files open without recovery warnings and that firmware compiles for the selected board.
+
+## 2. Broker and web smoke test
+
+Start Mosquitto, then start Cockpit. Verify:
+
+```bash
+curl http://127.0.0.1:8080/
+curl http://127.0.0.1:8080/json/
+```
+
+Publish a harmless test value and confirm it appears in the Cockpit MQTT console/dashboard:
+
+```bash
+mosquitto_pub -h localhost -t system/uptime -m '0 00:00:01'
+mosquitto_sub -h localhost -t system/uptime -C 1 -v
+```
+
+Also verify `/ws/telemetry` in the browser, `/api/session` before and after login, anonymous view-only access, and Login/logout navigation state.
+
+## 3. Serial protocol test
+
+Connect one controller with actuators disabled. Confirm that startup identification and heartbeat records are received, that malformed records do not crash the control loop, and that Adler-16 IDs match the documented topic.
+
+## 4. Sensor test
+
+With propulsion still disabled, verify system uptime/time, battery telemetry, water sensors, AHRS values, and leak status. Compare displayed units with the raw MQTT payloads.
+
+## 5. Actuator bench test
+
+With thrusters physically disconnected or mechanically restrained, issue one output command at a time. Verify zero, positive, negative, range limits, stop behavior, and restart behavior.
+
+## 6. Dry integration test
+
+Connect the full electronics stack without placing the vehicle in water. Verify network, MQTT, cameras, Cockpit routes, board heartbeats, power telemetry, and emergency-stop behavior.
+
+Verify Motion recording, still capture, gallery display, download links, configured recording duration, and free-space retention using a non-production media directory.
+
+## 7. Wet test
+
+Only after the dry test passes: inspect seals and penetrators, perform a tethered shallow-water test, check leak detection continuously, and keep a physical power cutoff available.
+
+## Current limitations
+
+The repository does not currently contain a comprehensive automated test suite. Existing files named `test*` are historical/integration experiments, not a reliable acceptance suite.

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en_gb" data-mdb-theme="dark" dir="ltr">
+  <head>
+    <meta charset="utf8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>ROV</title>
+
+    <!-- Icons -->
+      <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+      <link rel="manifest" href="/static/site.webmanifest">
+
+    <!-- MDB -->
+      <link
+        rel="stylesheet"
+        type="text/css"
+        href="/static/css/mdb.min.css"
+      />
+
+    <!-- My CSS -->
+      <link
+        rel="stylesheet"
+        type="text/css"
+        href="/static/css/style.css"
+      />
+
+    <!-- Font Awesome -->
+      <link
+        rel="stylesheet"
+        type="text/css"
+        href="/static/css/all.css"
+      />
+
+    <!-- Google Fonts Roboto -->
+      <!--  <link
+        rel="stylesheet"
+        type="text/css"
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"
+      /> -->
+
+    <!-- JQuery -->
+      <script src="/static/js/jquery.js"></script>
+      <script src="/static/js/jquery.flightindicators.js?v=rov-20260815"></script>
+
+    <!-- MQTT.js -->
+      <script src="/static/js/mqtt.js"></script>
+
+    <!-- Flight Indicators library styles -->
+      <link
+        rel="stylesheet"
+        type="text/css"
+        href="/static/css/flightindicators.css"
+      />
+
+  </head>
+ 
+  <body onload="menuIcons()">
+  <!-- Start your project here-->
+
+    <!-- Navbar -->
+      <nav style="
+        z-index: 1;
+        min-height: 60px;"
+        class="navbar navbar-expand-lg navbar-dark bg-dark .navbar-fixed-top"
+      />
+
+      <!-- Container wrapper -->
+      <div class="container">
+
+        <!-- Navbar brand -->
+        <a class="navbar-brand mt-2 mt-lg-0" href="#">
+            <i class="fa-solid fa-otter fa-lg"></i>&nbsp;ROV
+            <!-- <i class="fa-solid fa-paw fa-lg"></i>&nbsp;K9 -->
+        </a>
+
+          <!-- Right elements -->
+          <!-- Icons -->
+          <ul class="navbar-nav d-flex flex-row me-1">
+
+              <!-- Battery Level -->
+              <!-- MQTT System/SOC -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" id="batteryLevel">Error battery icon</a>
+              </li>
+
+              <!-- MQTT Battery/Voltage -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" id="batteryVoltage">Error Voltage</a>
+              </li>
+              <!-- End Battery Level -->
+
+              <!-- seperater -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link">|</a>
+              </li>
+
+              <!-- MQTT Water/Temperature -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" id="temperature">Error temperature</a>
+              </li>
+
+              <!-- seperater -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link">|</a>
+              </li>
+
+              <!-- MQTT Direction/Depth -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" id="compass">Error compass</a>
+              </li>
+
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" id="depth">Error depth</a>
+              </li>
+
+              <!-- seperater -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link">|</a>
+              </li>
+
+              <!-- MQTT System/Uptime -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" id="upTime">Error Uptime</a>
+              </li>
+
+              <!-- seperater -->
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link">|</a>
+              </li>
+
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" href="/"><i class="fa-solid fa-video fa-lg"></i>&nbsp;Live</a>
+              </li>
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" href="/files/"><i class="fa-solid fa-film fa-lg"></i>&nbsp;Files</a>
+              </li>
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" href="/files/"><i class="fa-solid fa-table-list"></i>&nbsp;Raw Data</a>
+              </li>
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" href="/files/"><i class="fa-solid fa-traffic-light"></i>&nbsp;Annunciator</a>
+              </li>
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" href="/map/"><i class="fa-solid fa-map-location-dot"></i>&nbsp;Map</a>
+              </li>
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" href="/cameras/"><i class="fa-solid fa-camera"></i>&nbsp;Cameras</a>
+              </li>
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" href="/gamepad/"><i class="fa-solid fa-gamepad"></i>&nbsp;Gamepad</a>
+              </li>
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" href="/account/"><i class="fa-solid fa-user-shield"></i>&nbsp;Account</a>
+              </li>
+              <li class="nav-item me-3 me-lg-0">
+                  <a class="nav-link" id="sessionLink" href="/login"><i class="fa-solid fa-right-to-bracket"></i>&nbsp;Login</a>
+              </li>
+
+          </ul>
+          <!-- Right elements -->
+      </div>
+      <!-- Container wrapper -->
+    </nav>
+  <!-- Navbar End-->
+
+  <script>
+    fetch('/api/session', {cache: 'no-store', credentials: 'same-origin'}).then(response => response.json()).then(session => {
+      const link = document.getElementById('sessionLink');
+      if (!link || !session.authenticated) return;
+      link.href = '/logout';
+      link.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i>&nbsp;${session.username}`;
+      link.title = 'Log out';
+    }).catch(() => {});
+  </script>

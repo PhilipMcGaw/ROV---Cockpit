@@ -1,0 +1,14 @@
+[Unit]
+Description=ROV Cockpit web application
+After=network.target
+
+[Service]
+# User=pi
+WorkingDirectory=/home/pi/ROV/Cockpit/
+ExecStart=/home/pi/ROV/Cockpit/run.sh
+Restart=always
+StandardOutput=file:/home/pi/cockpit_output.log
+StandardError=file:/home/pi/cockpit_output.log
+
+[Install]
+WantedBy=multi-user.target
