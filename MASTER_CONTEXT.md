@@ -19,7 +19,7 @@ Camera and media ownership belongs to Cockpit: camera inventory, Motion configur
 
 The map supports optional Raspberry Pi Nginx tile caching through `MAP_TILE_PROXY=true` for mobile-link deployments. Local Windows development uses direct provider URLs by default.
 - `requirements.txt` — runtime dependencies, following the project’s TiaB-style dependency workflow.
-- `scripts/` — Windows portable WinPython installation and startup scripts, plus the Raspberry Pi/Linux Nginx configuration helper.
+- `scripts/` — Windows portable WinPython installation and startup scripts, the project-local POSIX dependency installer, Raspberry Pi provisioning, and the Nginx configuration helper.
 
 ## Runtime rules
 
@@ -47,5 +47,7 @@ Future Windows batch, PowerShell, and launcher scripts must use a deliberately v
 The same rules apply to POSIX shell scripts on macOS, Linux, and Raspberry Pi. Shell scripts must use strict error handling, derive paths from the script location, avoid unapproved system changes, validate prerequisites, check important command exit statuses, preserve diagnostic information after failure, and report the final environment state clearly.
 
 The Raspberry Pi deployment helper `scripts/3_configure_nginx.sh` is the supported repeatable method for installing the Cockpit reverse-proxy configuration. It may require `sudo` because it changes system Nginx and systemd state; it must back up an existing site configuration before replacement, validate Nginx before reload, and report the resulting service and cache state.
+
+The separate `scripts/0_provision_raspberry_pi.sh` is the supported initial Debian-based Raspberry Pi provisioning path. It installs only the currently evidenced platform dependencies and NATS package, creates the Cockpit virtual environment, installs the Cockpit systemd unit, and enables/checks the services. If NATS is not available from configured trusted Debian repositories, it must stop and report the condition rather than use an unverified installer. `scripts/1_install_dependencies.sh` remains project-local and must not install system packages or services.
 
 Scripts must reject unsupported direct UNC execution where local paths are required, validate prerequisites before dependent operations, check important external-command exit statuses, fail early with the path, consequence, and corrective action, be safe to rerun where practical, and avoid deleting or overwriting user data. Temporary files must be project-local and cleaned after success or preserved with a diagnostic path after failure. Downloads must be verified using an explicit checksum or trusted manifest where available. Vendor DLLs, SDKs, and installers remain optional or unverified until their presence and operation are confirmed, and native DLL architecture must match the active Python architecture. Output must distinguish installed, detected, available, configured, connected, bench tested, and physically validated states, and finish with an environment summary showing every check.

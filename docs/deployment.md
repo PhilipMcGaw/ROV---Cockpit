@@ -8,14 +8,18 @@ From the repository root on the target machine:
 
 ```bash
 chmod +x scripts/*.sh
-./scripts/1_install_dependencies.sh
+sudo bash scripts/0_provision_raspberry_pi.sh
 ```
 
-The Cockpit Linux launcher installs its Python environment locally and, on Raspberry Pi/Linux, installs Nginx and Motion. NATS Core is a separate system service and must be available at the configured `NATS_URL`.
+The provisioning script is the initial Raspberry Pi setup path. It installs Python, Nginx, Motion, curl, certificates and NATS Server from the configured Debian repositories; creates the Cockpit virtual environment; installs the Cockpit systemd unit; enables the services; applies the Nginx configuration; and performs service checks. It requires `sudo` because it changes system packages and services. It does not physically validate cameras, sensors, motor controllers or the ROV data link.
+
+If NATS Server is unavailable from the configured Debian repositories, provisioning stops before service configuration. Add a trusted, documented repository or use the approved NATS deployment procedure; do not substitute an unverified installer.
+
+The dependency script is deliberately separate and project-local. It creates or updates only the Python environment and installs `requirements.txt`; it does not install Nginx, Motion, NATS or any system service. Use it for normal dependency updates after provisioning.
 
 Windows scripts are intentionally verbose and portable. They derive paths from the script location, reject direct UNC execution, do not modify PATH or the registry, use the project-local WinPython runtime, require no administrator rights, verify the WinPython download, and report prerequisite and command failures explicitly.
 
-On Windows use `scripts\\1_install_dependencies.bat`; it automatically downloads a project-local 64-bit WinPython runtime when needed and installs the shared `requirements.txt` with that runtime's `pip`. This includes Uvicorn and does not require `uv`. On macOS use the shell script without `sudo`; it automatically installs `uv`, creates `.venv`, and installs the same `requirements.txt`. On Linux/Raspberry Pi it also installs the optional broker, Nginx, Motion, and Python build packages and prints the required `dialout` guidance.
+On Windows use `scripts\\1_install_dependencies.bat`; it automatically downloads a project-local 64-bit WinPython runtime when needed and installs the shared `requirements.txt` with that runtime's `pip`. This includes Uvicorn and does not require `uv`. On macOS use the shell script without `sudo`; it creates `.venv` and installs the same `requirements.txt`. On Linux/Raspberry Pi, use `scripts/0_provision_raspberry_pi.sh` for initial platform provisioning, then `scripts/1_install_dependencies.sh` for project-local dependency updates.
 
 The Windows bootstrap is designed for machines where users do not have administrator rights: it installs below the project directory, rejects UNC paths for predictable process/filesystem behavior, and uses portable Python plus `pip` rather than requiring system Python or `uv`. It still needs write access to the project directory and network access for first-time downloads.
 
