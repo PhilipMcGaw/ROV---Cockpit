@@ -16,7 +16,7 @@ Every hardware-facing capability should have a safe mock, replay, or disconnecte
 
 ## Units first
 
-Every telemetry value and demand should have an explicit unit and scaling rule. Do not make the operator infer whether a value is volts, decivolts, metres, decimetres, degrees, or a percentage.
+Every telemetry value and demand should have an explicit unit and scaling rule. Do not make the operator infer whether a value is volts, decivolts, metres, decimetres, °, or a percentage.
 
 ## Honest validation status
 

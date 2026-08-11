@@ -5,6 +5,14 @@ $ProgressPreference = "SilentlyContinue"
 $ProjectRoot = [IO.Path]::GetFullPath($ProjectRoot)
 $PythonRoot = Join-Path $ProjectRoot "runtime"
 $PythonExe = Join-Path $PythonRoot "python.exe"
+Write-Host "[INFO] ROV Cockpit portable-runtime bootstrap"
+Write-Host "[INFO] Project version: unversioned; see MASTER_CONTEXT.md"
+Write-Host "[INFO] Project directory: $ProjectRoot"
+Write-Host "[INFO] Interpreter/runtime: WinPython will be installed at $PythonExe"
+Write-Host "[INFO] Operating mode: project-local Windows runtime; no administrator rights requested"
+Write-Host "[INFO] Important paths: temporary bootstrap data will be stored below $(Join-Path $ProjectRoot '_bootstrap_winpython')"
+Write-Host "[INFO] Optional components: vendor DLLs and hardware SDKs are not installed or assumed"
+if ($ProjectRoot.StartsWith('\\')) { throw "[FAIL] Direct UNC execution is unsupported: $ProjectRoot. Why it matters: local path semantics are required. Corrective action: copy the project locally or map the share to a drive letter." }
 if (Test-Path -LiteralPath $PythonExe) { Write-Host "[PASS] Portable Python already exists: $PythonExe"; exit 0 }
 if (Test-Path -LiteralPath $PythonRoot) { if (@(Get-ChildItem -LiteralPath $PythonRoot -Force).Count -gt 0) { throw "The runtime folder exists but is incomplete. Rename or remove it, then retry." } }
 $bootstrapRoot = Join-Path $ProjectRoot "_bootstrap_winpython"

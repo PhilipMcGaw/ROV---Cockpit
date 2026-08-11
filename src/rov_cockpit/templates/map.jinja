@@ -1,16 +1,10 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Map</title>
+{% include "header.jinja" %}
+<title>ROV Map</title>
     <link rel="stylesheet" href="/static/css/leaflet.css" />
     <style>
         html, body { height: 100%; margin: 0; }
-        #map { height: 100vh; width: 100%; }
+        #map { height: calc(100vh - 60px); width: 100%; }
     </style>
-</head>
-<body>
     <div id="map"></div>
 
     <script src="/static/js/leaflet.js"></script>
@@ -19,14 +13,17 @@
         const map = L.map('map').setView([52.16900980550594, -1.2140212752292743], 19); // 19 is the max zoom for OSM.
 
         // OpenStreetMap base layer
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const tilePrefix = {{ map_tile_prefix|tojson }};
+        const osmUrl = tilePrefix ? tilePrefix + '/osm/{z}/{x}/{y}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        const seamarkUrl = tilePrefix ? tilePrefix + '/seamarks/{z}/{x}/{y}.png' : 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png';
+        const osm = L.tileLayer(osmUrl, {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         // OpenSeaMap seamarks overlay
         // https://wiki.openstreetmap.org/wiki/Raster_tile_providers
-        const seamarks = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+        const seamarks = L.tileLayer(seamarkUrl, {
             maxZoom: 18,
             attribution: '&copy; OpenSeaMap (seamarks) — Data: OpenSeaMap / OpenStreetMap contributors',
             opacity: 0.9
@@ -39,5 +36,3 @@
             { collapsed: false }
         ).addTo(map);
     </script>
-</body>
-</html>

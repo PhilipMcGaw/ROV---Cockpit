@@ -3,9 +3,10 @@ Description=ROV Cockpit web application
 After=network.target
 
 [Service]
-# User=pi
-WorkingDirectory=/home/pi/ROV/Cockpit/
-ExecStart=/home/pi/ROV/Cockpit/run.sh
+User=pi
+WorkingDirectory=/home/pi/ROV\x20-\x20Cockpit
+ExecStart=/bin/bash /home/pi/ROV\x20-\x20Cockpit/run.sh
+Environment=MAP_TILE_PROXY=true
 Restart=always
 StandardOutput=file:/home/pi/cockpit_output.log
 StandardError=file:/home/pi/cockpit_output.log

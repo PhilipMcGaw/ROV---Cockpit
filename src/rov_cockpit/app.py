@@ -33,6 +33,7 @@ DEFAULT_CAMERA_CONFIG = PROJECT_ROOT / "configs" / "cameras.json"
 CAMERA_CONFIG_PATH = Path(os.getenv("CAMERA_CONFIG", str(DEFAULT_CAMERA_CONFIG)))
 NATS_URL = os.getenv("NATS_URL", "nats://127.0.0.1:4222")
 NATS_SUBJECT = os.getenv("NATS_SUBJECT", ">")
+MAP_TILE_PROXY = os.getenv("MAP_TILE_PROXY", "false").lower() == "true"
 MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(PROJECT_ROOT / "media")))
 STILLS_DIR = MEDIA_ROOT / "stills"
 VIDEOS_DIR = MEDIA_ROOT / "videos"
@@ -145,6 +146,34 @@ async def on_message(message: Any) -> None:
     with nats_lock:
         nats_data[topic] = payload
 
+
+async def nats_error_callback(exc: Exception) -> None:
+    """Suppress library retry tracebacks; startup reports read-only mode once."""
+    return None
+
+
+async def connect_nats_in_background(app: FastAPI) -> None:
+    """Attempt NATS connection without delaying read-only Cockpit startup."""
+    try:
+        client = await asyncio.wait_for(
+            nats.connect(
+                NATS_URL,
+                connect_timeout=3,
+                max_reconnect_attempts=0,
+                error_cb=nats_error_callback,
+            ),
+            timeout=4,
+        )
+        await client.subscribe(NATS_SUBJECT, cb=on_message)
+        app.state.nats_client = client
+        print(f"[PASS] NATS client connected: {NATS_URL} subject={NATS_SUBJECT}")
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        app.state.nats_client = None
+        print(f"[WARN] NATS Server is unavailable at {NATS_URL}: {exc}")
+        print("[INFO] Cockpit is running in read-only mode; live telemetry and control are unavailable.")
+
     if telemetry_loop is not None and telemetry_loop.is_running():
         asyncio.run_coroutine_threadsafe(
             broadcast_telemetry(topic, payload), telemetry_loop
@@ -244,17 +273,13 @@ async def lifespan(app: FastAPI):
     global telemetry_loop
     telemetry_loop = asyncio.get_running_loop()
     maintenance_task = asyncio.create_task(media_maintenance())
-    try:
-        client = await nats.connect(NATS_URL)
-        await client.subscribe(NATS_SUBJECT, cb=on_message)
-        app.state.nats_client = client
-        print(f"NATS client started: {NATS_URL} subject={NATS_SUBJECT}")
-    except Exception as exc:
-        app.state.nats_client = None
-        print(f"Failed to connect to NATS server: {exc}")
+    app.state.nats_client = None
+    nats_task = asyncio.create_task(connect_nats_in_background(app))
 
     yield
 
+    nats_task.cancel()
+    await asyncio.gather(nats_task, return_exceptions=True)
     if app.state.nats_client is not None:
         await app.state.nats_client.drain()
         print("NATS client stopped")
@@ -264,6 +289,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="ROV Cockpit", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Serve the conventional root favicon URL used by browsers."""
+    return FileResponse(STATIC_DIR / "favicon.ico")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -412,7 +443,12 @@ async def download_media(media_type: str, filename: str):
 
 @app.get("/map/", response_class=HTMLResponse)
 async def map_page(request: Request):
-    return templates.TemplateResponse(request=request, name="map.jinja")
+    tile_prefix = "/map-tiles" if MAP_TILE_PROXY else None
+    return templates.TemplateResponse(
+        request=request,
+        name="map.jinja",
+        context={"map_tile_prefix": tile_prefix},
+    )
 
 
 @app.get("/3d/", response_class=HTMLResponse)
