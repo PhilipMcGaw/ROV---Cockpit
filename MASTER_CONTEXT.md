@@ -31,6 +31,8 @@ The map supports optional Raspberry Pi Nginx tile caching through `MAP_TILE_PROX
 
 ## Runtime rules
 
+The main `<rov-attitude>` instrument is currently a native SVG/CSS virtual-horizon preview showing roll (`r:`) and pitch (`p:`) from the shared TypeScript state. The separate pitch and camera-pitch instruments remain on the existing path; Flight Indicator is retained for those remaining legacy instruments.
+
 The dashboard includes a left-side vertical depth/altitude strip using the existing `sensor/water/depth` route and decimetre-to-metre conversion. The former lower-right Flight Indicator altimeter and top-bar Heading/Depth items have been removed; the heading strip and left-side depth/altitude strip are the active overlay presentations. Both strips use a white instrument label and amber current-value presentation. The heading strip remains an independent overlay, positioned below the top bar with fallback spacing and a foreground stacking level.
 
 The Windows frontend helper validates the project-root `package.json`, runs npm from the project root, and propagates npm and TypeScript failures before Uvicorn starts.

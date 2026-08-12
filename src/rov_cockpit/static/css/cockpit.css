@@ -13,3 +13,13 @@ body { margin: 0; min-width: 320px; background: #111; }
 .nav-item { margin: 0; } .nav-link { color: inherit; text-decoration: none; }
 .card { padding: var(--rov-panel-gap); border: 1px solid var(--rov-panel-border); border-radius: var(--rov-panel-radius); background: var(--rov-panel-background); }
 .form-control { width: 100%; } .btn { display: inline-block; width: auto; } .table-responsive { overflow-x: auto; }
+.rov-attitude { display: block; position: relative; width: 200px; height: 200px; color: #fff; }
+.rov-attitude__svg { display: block; width: 100%; height: 100%; background: #06183d; border-radius: 50%; }
+.rov-attitude__bezel { fill: #07152d; stroke: #dce8f5; stroke-width: 2; }
+.rov-attitude__sky { fill: #06264f; } .rov-attitude__water { fill: #071b3d; }
+.rov-attitude__horizon { transform-origin: 120px 120px; transition: transform .18s ease-out; }
+.rov-attitude__horizon-line, .rov-attitude__marks { fill: none; stroke: #fff; stroke-width: 2; }
+.rov-attitude__aircraft { fill: none; stroke: #ffb000; stroke-width: 3; stroke-linecap: round; }
+.rov-attitude__centre { fill: #ffb000; } .rov-attitude__reference { stroke: #fff; stroke-width: 2; }
+.rov-attitude__readouts { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: .55rem 0; pointer-events: none; font: 600 14px Arial, sans-serif; }
+.rov-attitude__readouts output { color: #fff; } .rov-attitude[data-status="unavailable"] { opacity: .65; }

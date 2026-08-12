@@ -515,7 +515,6 @@
         <script type="text/javascript">
             // Dynamic examples
 
-            var attitude = $.flightIndicator('#attitude', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
             var heading = $.flightIndicator('#heading', 'heading', {heading:0, showBox: true});
             var pitchIndicator = $.flightIndicator('#pitch', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
             var cameraPitchIndicator = $.flightIndicator('#camera-pitch', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
@@ -591,12 +590,11 @@
                 if (topic === "sensor/ahrs/imu/pitch") {
                     const pitch = Number(message);
                     if (Number.isFinite(pitch)) {
-                        attitude.setPitch(pitch);
                         pitchIndicator.setPitch(pitch);
                     }
                 }
                 if (topic === "sensor/ahrs/imu/roll") {
-                    attitude.setRoll(50*Math.sin(message.toString()/10));
+                        // Main attitude is rendered by the native <rov-attitude> component.
                     // TC update - note that the TC appears opposite the angle of the attitude indicator, as it mirrors the actual wing up/down position
                     turn_coordinator.setTurn((30*Math.sin(message.toString()/10))*-1);
                   }
