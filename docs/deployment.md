@@ -1,6 +1,6 @@
 # Raspberry Pi deployment
 
-The Cockpit deployment assumes the repository is installed as `/home/pi/ROV - Cockpit` beside the other ROV repositories.
+On Linux, the documented default development location is `~/ROV - Cockpit`, beside the other ROV repositories. On macOS, use a user-selected workspace beneath the home directory, for example `~/Projects/ROV/ROV - Cockpit`. Raspberry Pi production deployment may use `/home/pi/ROV - Cockpit` as documented for that target. Scripts derive paths from their own location and do not require these locations to be hard-coded.
 
 ## One-time installation
 
@@ -29,7 +29,7 @@ The Windows bootstrap is designed for machines where users do not have administr
 ./scripts/2_start_app.sh
 ```
 
-On Windows use `scripts\\2_start_app.bat`. On macOS, or on Linux without deployed systemd units, the shell script starts a local Uvicorn Cockpit server and opens the browser. On a deployed Raspberry Pi it restarts Mosquitto, Motion, the Python control service, Cockpit, and Nginx; use that mode only when it is safe to interrupt the ROV.
+On Windows use `scripts\\2_start_app.bat`. On macOS, or on Linux without deployed systemd units, the shell script starts a local Uvicorn Cockpit server and opens the browser. On a deployed Raspberry Pi it restarts NATS Server, Motion, the Python control service, Cockpit, and Nginx; use that mode only when it is safe to interrupt the ROV.
 
 ## Services
 
@@ -111,7 +111,7 @@ The script copies configuration files into system locations, reloads systemd, an
 systemctl status nginx motion cockpit
 curl http://127.0.0.1/
 curl http://127.0.0.1:8080/json/
-mosquitto_sub -h 127.0.0.1 -t '#' -v
+nats sub ">"
 ```
 
-The MQTT configuration currently permits anonymous access. Restrict this before exposing the broker beyond the trusted ROV network.
+The NATS configuration must be restricted before exposing the server beyond the trusted ROV network. Confirm the configured authorisation model before deployment.

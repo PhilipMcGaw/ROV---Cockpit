@@ -1,0 +1,23 @@
+{
+  "documentation_patterns": [
+    "MASTER_CONTEXT.md",
+    "CONTRIBUTING.md",
+    "docs/**"
+  ],
+  "documentation_required_patterns": [
+    "src/**",
+    "frontend/**",
+    "configs/**",
+    "scripts/**",
+    "requirements.txt",
+    "package.json",
+    "tsconfig.json",
+    "README.md"
+  ],
+  "intentional_exemptions": [
+    {"pattern": ".gitignore", "reason": "Repository hygiene only; no behaviour, interface, deployment, or support claim changes."},
+    {"pattern": ".github/**", "reason": "CI metadata only; documentation policy changes remain covered by the policy and audit files."},
+    {"pattern": "tests/test_documentation.py", "reason": "The audit implementation itself is covered by its own executable checks and the policy documentation."},
+    {"pattern": "tests/documentation_change_policy.py", "reason": "The classifier implementation is covered by its own executable checks and the policy documentation."}
+  ]
+}

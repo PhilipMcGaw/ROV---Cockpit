@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en_gb" data-mdb-theme="dark" dir="ltr">
+<html lang="en_gb" data-theme="dark" dir="ltr">
     <head>
         <meta charset="utf8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -16,14 +16,14 @@
             <link
                 rel="stylesheet"
                 type="text/css"
-                href="/static/css/mdb.min.css"
+                href="/static/css/pico.min.css"
             />
 
         <!-- My CSS -->
             <link
                 rel="stylesheet"
                 type="text/css"
-                href="/static/css/style.css"
+                href="/static/css/cockpit.css"
             />
 
         <!-- Font Awesome -->
@@ -71,11 +71,7 @@
 <!-- Start your project here-->
 
   <!-- Navbar -->
-    <nav style="
-        z-index: 1;
-        min-height: 60px;"
-        class="navbar navbar-expand-lg navbar-dark bg-dark .navbar-fixed-top"
-    />
+    <nav class="navbar" aria-label="Primary navigation">
 
     <!-- Container wrapper -->
     <div class="container">
@@ -94,7 +90,7 @@
             <!-- Battery Level -->
             <!-- MQTT System/SOC -->
             <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" id="batteryLevel">Battery icon</a>
+                <a class="nav-link"><rov-battery></rov-battery></a>
             </li>
 
             <!-- MQTT Battery/Voltage -->
@@ -116,15 +112,6 @@
             <!-- seperater -->
             <li class="nav-item me-3 me-lg-0">
                 <a class="nav-link">|</a>
-            </li>
-
-            <!-- MQTT Direction/Depth -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" id="compass"><i class="fa-regular fa-compass"></i>&nbsp;Compass</a>
-            </li>
-
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" id="depth">Depth</a> <!-- converter between meters, feet and fathoms should be added here (1 fathom is 6 feet) -->
             </li>
 
             <!-- seperater -->
@@ -188,9 +175,17 @@
     </div>
 
     <div class="heading-strip" aria-label="ROV heading">
+        <div class="heading-strip-title">Heading</div>
         <div class="heading-strip-value" id="headingStripValue">---°</div>
         <div class="heading-strip-scale" id="headingStripScale"></div>
         <div class="heading-strip-pointer"></div>
+    </div>
+
+    <div class="altitude-strip" aria-label="ROV depth">
+        <div class="altitude-strip-title">Depth</div>
+        <div class="altitude-strip-value" id="altitudeStripValue">-- m</div>
+        <div class="altitude-strip-scale" id="altitudeStripScale"></div>
+        <div class="altitude-strip-pointer"></div>
     </div>
 
     <div class="network-rate" aria-label="Estimated browser network rate" title="Estimated HTTP traffic between this browser and the Cockpit server">
@@ -201,8 +196,8 @@
     <style>
         .heading-strip {
             position: fixed;
-            z-index: 3;
-            top: 68px;
+            z-index: 20;
+            top: calc(var(--rov-nav-height, 60px) + var(--rov-overlay-gap, 8px));
             left: 50%;
             width: min(680px, 72vw);
             height: 72px;
@@ -221,6 +216,17 @@
             transform: translateX(-50%);
             z-index: 2;
             font: 600 15px Arial, sans-serif;
+            color: #ffb000;
+        }
+
+        .heading-strip-title {
+            position: absolute;
+            top: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            color: #fff;
+            font: 600 12px Arial, sans-serif;
         }
 
         .heading-strip-scale {
@@ -270,7 +276,7 @@
         .network-rate {
             position: fixed;
             z-index: 3;
-            top: 74px;
+            top: calc(var(--rov-nav-height) + 6px);
             right: 14px;
             display: flex;
             gap: 12px;
@@ -283,6 +289,34 @@
         }
 
         .network-arrow { color: #ffb000; font-size: 15px; }
+
+        .altitude-strip {
+            position: fixed;
+            z-index: 3;
+            top: calc(var(--rov-nav-height) + 84px);
+            left: 12px;
+            width: 92px;
+            height: min(360px, 48vh);
+            overflow: hidden;
+            color: #fff;
+            background: linear-gradient(to right, rgba(20, 35, 48, .78), rgba(20, 35, 48, .18));
+            border-radius: 12px;
+            text-shadow: 0 1px 3px #000;
+        }
+
+        .altitude-strip-title, .altitude-strip-value {
+            position: absolute;
+            z-index: 2;
+            width: 100%;
+            text-align: center;
+            font: 600 12px Arial, sans-serif;
+        }
+        .altitude-strip-title { top: 8px; }
+        .altitude-strip-value { top: 28px; color: #ffb000; }
+        .altitude-strip-scale { position: absolute; top: 50%; left: 0; width: 100%; transform: translateY(-50%); transition: transform .25s ease-out; }
+        .altitude-tick { position: relative; height: 34px; border-right: 1px solid rgba(255,255,255,.8); text-align: right; padding: 8px 13px 0 0; box-sizing: border-box; font: 10px Arial, sans-serif; }
+        .altitude-tick::after { content: ""; position: absolute; top: 0; right: -1px; width: 12px; border-top: 1px solid rgba(255,255,255,.9); }
+        .altitude-strip-pointer { position: absolute; top: 50%; right: 0; z-index: 2; width: 0; height: 0; transform: translateY(-50%); border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-right: 14px solid #ffb000; }
     </style>
 
     <script>
@@ -311,6 +345,31 @@
             window.updateHeadingStrip(0);
         })();
     </script>
+    <script>
+        (() => {
+            const scale = document.getElementById('altitudeStripScale');
+            const value = document.getElementById('altitudeStripValue');
+            if (!scale || !value) return;
+            for (let metres = -10; metres <= 10; metres += 1) {
+                const tick = document.createElement('div');
+                tick.className = 'altitude-tick';
+                tick.textContent = `${metres} m`;
+                scale.appendChild(tick);
+            }
+            window.updateAltitudeStrip = (depthDecimetres) => {
+                const depth = Number(depthDecimetres) / 10;
+                if (!Number.isFinite(depth)) {
+                    value.textContent = '-- m';
+                    return;
+                }
+                const metres = -depth;
+                value.textContent = `${metres.toFixed(1)} m`;
+                scale.style.transform = `translateY(calc(-50% - ${metres * 34}px))`;
+            };
+        })();
+    </script>
+    <script type="module" src="/static/dist/main.js"></script>
+    <script type="module" src="/static/dist/components/rov-depth.js"></script>
 
     <script>
         (() => {
@@ -383,50 +442,41 @@
 -->
 
 <!-- Guages - see https://github.com/sebmatton/jQuery-Flight-Indicators -->
-    <div  class="compass" id="compass"
+    <rov-heading class="compass" id="compass"
         style="position: fixed;
         right: 20px;
         bottom: 20px;
         height: 200px;
         width: 200px;">
             <span id="heading"></span>
-    </div>
+    </rov-heading>
 
-    <div  class="attitude" id="attitude"
+    <rov-attitude class="attitude" id="attitude"
         style="position: fixed;
         right: 220px;
         bottom: 20px;
         height: 200px;
         width: 200px;">
             <span id="attitude"></span>
-    </div>
+    </rov-attitude>
 
-    <div  class="altimeter" id="altimeter"
-        style="position: fixed;
-        right: 420px;
-        bottom: 20px;
-        height: 200px;
-        width: 200px;">
-            <span id="altimeter"></span>
-    </div>
-
-    <div  class="pitch-indicator" id="pitch-indicator"
+    <rov-pitch class="pitch-indicator" id="pitch-indicator"
         style="position: fixed;
         right: 620px;
         bottom: 20px;
         height: 200px;
         width: 200px;">
             <span id="pitch"></span>
-    </div>
+    </rov-pitch>
 
-    <div class="camera-pitch-indicator" id="camera-pitch-indicator"
+    <rov-camera-pitch class="camera-pitch-indicator" id="camera-pitch-indicator"
         style="position: fixed;
         right: 820px;
         bottom: 20px;
         height: 200px;
         width: 200px;">
             <span id="camera-pitch"></span>
-    </div>
+    </rov-camera-pitch>
 
 <!-- These Guages are not used:
 
@@ -467,7 +517,6 @@
 
             var attitude = $.flightIndicator('#attitude', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
             var heading = $.flightIndicator('#heading', 'heading', {heading:0, showBox: true});
-            var altimeter = $.flightIndicator('#altimeter', 'altimeter', {showBox: true});
             var pitchIndicator = $.flightIndicator('#pitch', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
             var cameraPitchIndicator = $.flightIndicator('#camera-pitch', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
             var variometer = $.flightIndicator('#variometer', 'variometer', {vario:0, showBox : false});
@@ -524,9 +573,8 @@
                 }
 
                 if (topic === "sensor/water/depth") {
-                    if (depthElement) {
-                        depthElement.innerHTML = "<i class=\"fa-solid fa-gauge\"></i> -" + (message.toString()/10) + " m";
-                        altimeter.setAltitude(message.toString() * 10);         // This updates the Altimeter (number is in decimeters)
+                    if (window.updateAltitudeStrip) {
+                        window.updateAltitudeStrip(message.toString() * 10);
                     }
                 }
 

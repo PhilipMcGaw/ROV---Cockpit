@@ -1,0 +1,22 @@
+.rov-depth {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.rov-depth__icon {
+  font-size: 0.9em;
+}
+
+.rov-depth--unavailable {
+  color: var(--rov-status-unavailable, #adb5bd);
+}
+
+.rov-depth--available {
+  color: inherit;
+}
+
+.rov-instrument { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.rov-instrument__value { font-variant-numeric: tabular-nums; }
+.rov-instrument--unavailable { color: var(--rov-status-unavailable, #adb5bd); }

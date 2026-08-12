@@ -1,0 +1,21 @@
+name: ROV Cockpit checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check documentation currency
+        run: python3 tests/test_documentation.py
+      - name: Check pull-request documentation coverage
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mapfile -t changed_files < <(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}")
+          python3 tests/documentation_change_policy.py "${changed_files[@]}"

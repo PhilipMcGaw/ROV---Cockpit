@@ -5,11 +5,13 @@
 - Python 3.11 or newer.
 - `uv` for macOS/Linux dependency and environment management.
 - PowerShell and internet access for the Windows WinPython bootstrap.
-- A local Mosquitto broker for MQTT-backed runs.
+- A reachable NATS Core server for telemetry-backed runs.
 - Linux/Raspberry Pi hardware for GPIO, serial, I2C, SPI, and PWM behavior.
 - A Bluetooth or USB HID gamepad is optional for controller testing.
 
 ## Windows setup
+
+The Windows frontend helper validates the project-root `package.json`, changes to the project root for npm operations, and propagates npm/TypeScript failures. A successful launcher message therefore indicates that the frontend build command actually completed successfully.
 
 Windows development deliberately follows the Test-in-a-Box portable-runtime pattern. Run:
 
@@ -66,7 +68,7 @@ Useful routes:
 - `/map/` — map view.
 - `/3d/` — 3D view.
 - `/files/` — placeholder files page.
-- `/json/` — dashboard-oriented MQTT snapshot.
+- `/json/` — dashboard-oriented NATS snapshot.
 - `/docs` — FastAPI-generated API documentation.
 
 ### Additional Cockpit interfaces
@@ -80,17 +82,27 @@ cd Control
 ../.venv/bin/python main.py
 ```
 
-This process expects the target hardware and local MQTT broker. Do not run it against connected propulsion hardware without first following the staged test procedure.
+This process expects the target hardware and a reachable NATS Core server. Do not run it against connected propulsion hardware without first following the staged test procedure.
 
 ## Configuration
 
-The Cockpit MQTT connection uses `MQTT_HOST` and `MQTT_PORT`, defaulting to `localhost:1883`. The broker WebSocket port used by the browser is configured separately in `Configs/mosquitto.conf` and the templates.
+The Cockpit NATS connection uses `NATS_URL` and `NATS_SUBJECT`, defaulting to `nats://127.0.0.1:4222` and `>`. Browsers receive telemetry through the Cockpit WebSocket and do not connect directly to NATS.
+
+The incremental TypeScript telemetry layer is authored under `frontend/src/` and emits browser state from `/ws/telemetry` into `window.rovCockpitTelemetry`. Depth, heading, attitude, pitch, camera pitch, battery, and network status now have independent Web Components; the remaining instruments continue to use the existing inline router. NATS logic remains exclusively in FastAPI.
+
+The launcher calls `scripts/build_frontend.bat` on Windows or `scripts/build_frontend.sh` on macOS/Linux before starting the application. These scripts compile TypeScript into `src/rov_cockpit/static/dist/` when npm is available. If npm is unavailable, they report a warning and retain the existing compiled output so the Cockpit can still start.
+
+The depth top-bar display is now implemented as `<rov-depth>`. It consumes the typed `sensor/water/depth` state without opening a WebSocket or knowing about NATS. The existing altimeter gauge and other instruments remain on the inline path during this incremental migration.
 
 ## Camera media
 
 Motion is configured for 30-minute rolling MP4 recordings by default under its target directory. The Cockpit `/files/` page can change the segment length in minutes, lists recordings, provides download links, and can capture the current high-resolution Motion frame as a still image. Restart Motion after changing the setting. Set `MEDIA_ROOT` and `MEDIA_MIN_FREE_GB` when deploying the Cockpit; the media maintenance path removes the oldest recordings when the free-space floor is reached.
 
 ## Gamepad development
+
+The Windows frontend build automatically bootstraps the pinned official Node.js/npm archive into the project-local `node-runtime/` directory when required. It verifies the archive against `SHASUMS256.txt`, requires no administrator rights, does not modify PATH, and rejects direct UNC execution. Linux `scripts/1_install_dependencies.sh` installs distribution `nodejs` and `npm` packages through `apt-get` and `sudo` when absent. macOS deliberately does not install Node.js; it uses available npm, while the committed compiled output remains the fallback when npm is unavailable.
+
+General-purpose page styling now uses Pico.css from the frontend dependency `@picocss/pico`. Served Pico CSS is copied to `src/rov_cockpit/static/css/pico.min.css`; Cockpit-specific variables and compatibility classes are maintained in `src/rov_cockpit/static/css/cockpit.css`. MDB is no longer loaded by the templates. jQuery remains only because the current Flight Indicator implementation requires it.
 
 The Browser Gamepad API works with standard HID controllers on Windows and macOS in current Edge, Chrome, and Firefox releases; Safari is supported on macOS. Pair the controller in the operating system before opening `/gamepad/`. Firefox may require a button press before it reports the controller.
 

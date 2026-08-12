@@ -5,7 +5,7 @@ The Cockpit web application is intended to be platform-independent. The hardware
 | Capability | Windows | macOS | Linux / Raspberry Pi |
 |---|:---:|:---:|:---:|
 | Cockpit development server | Supported | Supported | Supported |
-| MQTT-backed dashboard with a local broker | Supported | Supported | Supported |
+| NATS-backed dashboard with a reachable NATS Core server | Supported | Supported | Supported |
 | Camera UI and configuration inventory | UI supported; Motion not expected | UI supported; Motion not expected | Supported with Motion/Nginx |
 | Control-loop import/syntax work | Supported where dependencies install | Supported where dependencies install | Supported |
 | GPIO/I2C/SPI/PWM hardware control | Not supported | Not supported | Target platform |

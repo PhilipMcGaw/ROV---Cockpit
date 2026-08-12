@@ -1,2 +1,5 @@
 /runtime
+/node-runtime
+/_bootstrap_node
+node_modules/
 *.pyc

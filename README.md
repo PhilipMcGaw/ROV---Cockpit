@@ -21,7 +21,7 @@ The Windows launcher uses `runtime\python.exe` instead. The application defaults
 - `/account/` — authenticated password management.
 - `/login` and `/logout` — driver/admin session routes.
 - `/ws/telemetry` — browser telemetry WebSocket.
-- `/json/` — dashboard-oriented MQTT snapshot.
+- `/json/` — dashboard-oriented NATS snapshot.
 - `/docs` — FastAPI-generated API documentation.
 
 ## Architecture

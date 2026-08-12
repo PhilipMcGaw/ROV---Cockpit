@@ -6,7 +6,9 @@ The ROV Cockpit is the operator-facing FastAPI web application. It provides view
 
 ## Repository boundary
 
-This repository contains the Cockpit web layer only. ROV propulsion/control remains a separate service and communicates through the configured MQTT boundary. Data logging and HiL/SiL work are separate repositories.
+On Linux, the documented default is for sibling repositories to be cloned directly below the user home directory, for example `~/ROV - Cockpit`, `~/ROV - Control`, `~/ROV - Datalogger`, and `~/ROV - HiL and SiL`. On macOS, place them in a user-selected workspace beneath the home directory, for example `~/Projects/ROV/`. Scripts must still derive paths from their own location and must not depend on the current working directory. Windows remains portable and project-relative rather than assuming a literal home-directory path.
+
+This repository contains the Cockpit web layer only. ROV propulsion/control remains a separate service and communicates through the configured NATS Core boundary. Data logging and HiL/SiL work are separate repositories.
 
 ## Layout
 
@@ -19,7 +21,7 @@ Camera and media ownership belongs to Cockpit: camera inventory, Motion configur
 
 The Cockpit `/data/` page reads CSV exports from `CSV_ROOT` (default `<project>/data/csv`), permits selection of CSV sensor fields, displays a bounded preview and provides filtered downloads without modifying the source file. Datalogger storage and export production remain Datalogger responsibilities.
 
-The live Cockpit instrument row includes the existing compass, attitude and depth indicators, plus a separate pitch-only attitude indicator for nose-up/nose-down inclination. It uses the NATS subject `sensor.ahrs.imu.pitch` and displays unavailable or non-numeric values without inventing a measurement.
+The live Cockpit instrument row includes the existing compass, attitude and depth indicators, plus a separate pitch-only attitude indicator for nose-up/nose-down inclination. It uses the NATS subject `sensor.ahrs.imu.pitch` and displays unavailable or non-numeric values without inventing a measurement. The TypeScript Web Component set includes `<rov-heading>`, `<rov-attitude>`, `<rov-pitch>`, `<rov-camera-pitch>`, `<rov-battery>`, and `<rov-network-status>`; these components consume shared state and contain no NATS or WebSocket transport logic.
 
 The live instrument row also includes a separate camera inclination indicator. It consumes `sensor/camera/main/pitch`, expressed in degrees relative to the ROV body, where `0°` is straight ahead. The camera-control implementation is responsible for converting its physical 90° servo home position into this representation. The topic and physical correspondence require bench validation before the value is treated as measured camera orientation.
 
@@ -28,6 +30,10 @@ The map supports optional Raspberry Pi Nginx tile caching through `MAP_TILE_PROX
 - `scripts/` — Windows portable WinPython installation and startup scripts, the project-local POSIX dependency installer, Raspberry Pi provisioning, and the Nginx configuration helper.
 
 ## Runtime rules
+
+The dashboard includes a left-side vertical depth/altitude strip using the existing `sensor/water/depth` route and decimetre-to-metre conversion. The former lower-right Flight Indicator altimeter and top-bar Heading/Depth items have been removed; the heading strip and left-side depth/altitude strip are the active overlay presentations. Both strips use a white instrument label and amber current-value presentation. The heading strip remains an independent overlay, positioned below the top bar with fallback spacing and a foreground stacking level.
+
+The Windows frontend helper validates the project-root `package.json`, runs npm from the project root, and propagates npm and TypeScript failures before Uvicorn starts.
 
 - Run with FastAPI/Uvicorn on port `8080`.
 - Use `PYTHONPATH=src` and the package entry point `rov_cockpit.app:app`.
@@ -39,14 +45,28 @@ The map supports optional Raspberry Pi Nginx tile caching through `MAP_TILE_PROX
 - Do not make the Cockpit the only propulsion safety layer; neutral, timeout, and emergency-stop behaviour belongs in the control service.
 - Keep paths repository-relative through `PROJECT_ROOT`; do not reintroduce assumptions about the original monolithic ROV folder.
 - On Windows, use `scripts/1_install_dependencies.bat` followed by `scripts/2_start_app.bat`. These require a local or mapped drive, install portable Python without administrator rights, and do not use `uv`.
+- The incremental frontend telemetry layer is authored in `frontend/src/`, compiled to `src/rov_cockpit/static/dist/`, and connects only to `/ws/telemetry`. It must not contain NATS clients, NATS URLs, credentials, or direct broker access. Existing inline telemetry routing remains active until instruments are migrated.
+- The depth display is the first migrated instrument Web Component: `<rov-depth>` consumes `sensor/water/depth` from the TypeScript state model, while the existing altimeter remains inline until separately migrated. Invalid or unavailable depth is displayed explicitly as `Depth unavailable`.
+
+TypeScript is compiled automatically by the frontend build helper before application launch. The helper uses project-local package installation and preserves the committed `static/dist` output when npm is unavailable; it does not modify PATH or machine-wide locations.
+
+General-purpose styling uses Pico.css with Cockpit-specific rules in `src/rov_cockpit/static/css/cockpit.css`; MDB is no longer loaded by the templates. jQuery remains an intentional legacy dependency for Flight Indicator until that library is isolated or replaced. On Linux, `scripts/1_install_dependencies.sh` may install distribution `nodejs` and `npm` packages through `apt-get` and `sudo` when absent; macOS deliberately does not install Node.js and uses existing npm or committed frontend output.
+
+The desktop top bar is constrained to `--rov-nav-height` (`60 px`), uses `--rov-nav-font-size` (`0.75 rem`, approximately 75 % of the normal root size) for explicit text sizing, with non-wrapping navigation and controlled horizontal scrolling for narrower desktop viewports. Heading and network overlays use the same custom-property anchor and `--rov-overlay-gap` (`8 px`) so they do not touch the bar when it is resized.
 
 ## Documentation-sync rule
 
+Windows automatically bootstraps the pinned official Node.js/npm archive into the ignored project-local `node-runtime/` directory when required, using checksum verification and no administrator rights. The build helper may prepend that directory to the child process PATH only while invoking npm; it does not persist or modify the Windows user/system PATH. macOS/Linux use an available npm installation and retain the committed frontend output when npm is unavailable.
+
 Any change to routes, authentication, deployment, configuration, dependencies, media behaviour, or repository boundaries must update the relevant `docs/` file and this `MASTER_CONTEXT.md` in the same change. Every change must include a consistency check of this file; if it is not a true reflection of current behaviour, correct it immediately. Documentation must remain current, use formal British English, and be written for readers with an engineering degree or equivalent technical experience.
+
+Before implementation, inspect this document and the existing implementation. Treat this document as the architectural source of truth, avoid unrelated improvements, preserve working behaviour rather than changing style for its own sake, introduce no unrequested frameworks or dependencies, and prefer the smallest safe change. After implementation, run relevant tests, run the application where practical, check browser-facing behaviour, check imports and static assets, verify the WebSocket telemetry path, update this document if architecture or behaviour changed, and report exact changes and known limitations.
 
 Where SI units are used, place a space between the numerical value and the unit symbol, for example `5 m`, `12 V`, and `20 °C`. Use the degree symbol `°` by preference for angles.
 
 ## Windows scripting and deployment standard
+
+The enforceable documentation policy is `docs/documentation-policy.md`, contributor guidance is `CONTRIBUTING.md`, and the maintained current-state record is `docs/status.md`. The standard-library audit `tests/test_documentation.py` and pull-request classifier `tests/documentation_change_policy.py` must pass locally and in CI. Its maintainable path rules and documented exemptions are held in `tests/documentation_change_policy.json`. Status statements must distinguish implemented, automated-test verified, bench-tested, production-validated, and planned or unverified behaviour.
 
 Future Windows batch, PowerShell, and launcher scripts must use a deliberately verbose diagnostic style with formal British English, explicit `[INFO]`, `[PASS]`, `[WARN]`, `[FAIL]`, and `[SKIP]` labels, and an initial project/environment summary. Scripts must derive absolute paths from their own location, resolve tools and DLLs from project-relative paths, avoid modifying PATH, the registry, system directories, or machine-wide locations, and require no administrator rights unless a documented third-party driver or SDK explicitly requires them.
 

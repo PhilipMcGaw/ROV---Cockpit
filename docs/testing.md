@@ -13,18 +13,18 @@ Confirm that the changed KiCad files open without recovery warnings and that fir
 
 ## 2. Broker and web smoke test
 
-Start Mosquitto, then start Cockpit. Verify:
+Start NATS Server, then start Cockpit. Verify:
 
 ```bash
 curl http://127.0.0.1:8080/
 curl http://127.0.0.1:8080/json/
 ```
 
-Publish a harmless test value and confirm it appears in the Cockpit MQTT console/dashboard:
+Publish a harmless test value and confirm it appears in the Cockpit dashboard:
 
 ```bash
-mosquitto_pub -h localhost -t system/uptime -m '0 00:00:01'
-mosquitto_sub -h localhost -t system/uptime -C 1 -v
+nats pub system.uptime '0 00:00:01'
+nats sub system.uptime --count=1
 ```
 
 Also verify `/ws/telemetry` in the browser, `/api/session` before and after login, anonymous view-only access, and Login/logout navigation state.
@@ -35,7 +35,7 @@ Connect one controller with actuators disabled. Confirm that startup identificat
 
 ## 4. Sensor test
 
-With propulsion still disabled, verify system uptime/time, battery telemetry, water sensors, AHRS values, and leak status. Compare displayed units with the raw MQTT payloads.
+With propulsion still disabled, verify system uptime/time, battery telemetry, water sensors, AHRS values, and leak status. Compare displayed units with the raw NATS payloads.
 
 ## 5. Actuator bench test
 
@@ -43,7 +43,7 @@ With thrusters physically disconnected or mechanically restrained, issue one out
 
 ## 6. Dry integration test
 
-Connect the full electronics stack without placing the vehicle in water. Verify network, MQTT, cameras, Cockpit routes, board heartbeats, power telemetry, and emergency-stop behavior.
+Connect the full electronics stack without placing the vehicle in water. Verify network, NATS, cameras, Cockpit routes, board heartbeats, power telemetry, and emergency-stop behaviour.
 
 Verify Motion recording, still capture, gallery display, download links, configured recording duration, and free-space retention using a non-production media directory.
 
@@ -54,3 +54,6 @@ Only after the dry test passes: inspect seals and penetrators, perform a tethere
 ## Current limitations
 
 The repository does not currently contain a comprehensive automated test suite. Existing files named `test*` are historical/integration experiments, not a reliable acceptance suite.
+# Documentation currency audit
+
+Run `python tests/test_documentation.py` before submitting changes. The check is intentionally independent of application dependencies so that documentation drift can be detected on a clean or locked-down workstation. CI runs the same command.

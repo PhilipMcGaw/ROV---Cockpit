@@ -26,6 +26,8 @@ if not exist "%PROJECT_ROOT%\src\rov_cockpit\app.py" (
  echo [FAIL] Corrective action: restore the Cockpit source tree.
  exit /b 1
 )
+call "%SCRIPT_DIR%build_frontend.bat"
+if errorlevel 1 exit /b 1
 echo [INFO] Starting Uvicorn on http://127.0.0.1:8080; no system settings will be changed.
 echo [INFO] NATS connectivity will be attempted at the configured NATS_URL, defaulting to nats://127.0.0.1:4222.
 start "ROV Cockpit" http://127.0.0.1:8080

@@ -1,0 +1,19 @@
+{
+  "name": "rov-cockpit-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "TypeScript telemetry layer for the ROV Cockpit",
+  "scripts": {
+    "docs:check": "python tests/test_documentation.py",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  },
+  "dependencies": {
+    "@picocss/pico": "^2.1.1",
+    "rov-cockpit-frontend": "file:"
+  }
+}

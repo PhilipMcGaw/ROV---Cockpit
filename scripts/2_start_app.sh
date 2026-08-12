@@ -8,6 +8,8 @@ if [[ "$(uname -s)" != "Linux" ]]; then
   exit 1
 fi
 
+"$PROJECT_ROOT/scripts/build_frontend.sh"
+
 if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files cockpit.service >/dev/null 2>&1; then
   if [[ "${EUID}" -ne 0 ]]; then exec sudo bash "$0" "$@"; fi
   systemctl restart motion cockpit nginx
