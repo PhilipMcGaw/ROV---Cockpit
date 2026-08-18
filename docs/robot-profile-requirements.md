@@ -26,6 +26,10 @@ Every robot shall have a distinct namespace, such as `rov`, `k9`, or `piwars`. C
 
 The Cockpit may map operator inputs to logical robot commands. It shall not map logical commands to individual motors, thrusters, or physical actuator channels. The Controller owns motor direction, mixing, inversion, limits, ramps, neutral behaviour, timeouts, emergency stop, and all hardware mappings.
 
+Control also owns deployment of the approved Raspberry Pi robot-network configuration and runtime network/NATS health. Network-link loss and NATS command loss shall be handled safely by Control and shall not depend on Cockpit or Datalogger.
+
+Wi-Fi credentials and other deployment secrets, including NATS credentials, service tokens, and API keys, may initially be kept in one local, ignored Control secrets file on the robot. Secrets must not be included in the shared robot profile or committed to Git. The deployment shall use restrictive file permissions and document the required fields through a safe example template without publishing secret values.
+
 ## Example profiles
 
 The framework shall provide functional ROV, K9, and PiWars profiles. K9 shall include its optional soundboard capability. PiWars shall support configurable competition-oriented controls and sensors. Where physical hardware is not yet available, the examples shall run against mock or simulated Controller behaviour and shall label unverified or planned capabilities explicitly.
