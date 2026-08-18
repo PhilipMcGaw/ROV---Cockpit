@@ -1285,3 +1285,303 @@ Processing
 > **One robot → one Raspberry Pi → one Cockpit → one operator browser connection.**
 
 The Raspberry Pi lives in the robot, Cockpit is the operator-facing web application, Control owns physical control and safety, Datalogger owns recorded data, and NATS Core provides the internal service boundary.
+
+## Customisable operator interface
+
+Customisation is a fundamental Cockpit design requirement.
+
+Cockpit should emulate the configurable operator-interface philosophy demonstrated
+by Blue Robotics Cockpit, while adapting it to the ROV project's own architecture,
+NATS interfaces, robot profiles, safety model, and offline-first deployment.
+
+The operator interface should not be a fixed collection of hard-coded screens.
+It should provide a configurable system in which robot profiles define the
+available capabilities and the operator can arrange those capabilities into
+appropriate interfaces.
+
+The intended customisation model includes:
+
+### Profiles
+
+A profile represents a robot type, operating mode, or application configuration.
+
+Profiles may define:
+
+- available widgets;
+- available views;
+- available controls;
+- telemetry variables;
+- gamepad mappings;
+- custom actions;
+- camera/video configuration;
+- robot-specific presentation.
+
+The existing ROV, K9, and PiWars profiles use this mechanism to allow the same
+Cockpit application to support different robots without duplicating the
+application.
+
+### Views
+
+A profile may contain multiple Views.
+
+Views allow different operator layouts to be created for different purposes,
+for example:
+
+- normal driving;
+- inspection;
+- navigation;
+- camera operation;
+- diagnostics;
+- engineering/test operation.
+
+Views should be switchable during operation without requiring the application
+to restart.
+
+### Widgets
+
+Widgets are the primary building blocks of the operator interface.
+
+Widgets should support, where appropriate:
+
+- adding and removing;
+- moving;
+- resizing;
+- configuration;
+- visibility control;
+- shared telemetry/state access;
+- robot-profile-specific availability.
+
+Widget categories should include, as appropriate:
+
+- video;
+- attitude;
+- heading;
+- depth;
+- battery;
+- network status;
+- maps;
+- telemetry indicators;
+- plots;
+- status indicators;
+- controls;
+- diagnostic displays.
+
+### Mini-widgets
+
+Compact widgets should be available for areas such as:
+
+- the top bar;
+- status areas;
+- secondary controls;
+- compact telemetry;
+- connection status;
+- frequently used actions.
+
+### Input widgets
+
+Cockpit should support configurable operator input widgets including, where
+appropriate:
+
+- action buttons;
+- switches;
+- checkboxes;
+- dropdowns;
+- sliders;
+- dials;
+- labels.
+
+Input widgets should normally set an operator-facing value or invoke an Action.
+They must not bypass the Control service's safety boundary.
+
+### Custom widgets
+
+Cockpit should provide a mechanism for creating custom widgets where practical.
+
+A custom widget should be capable of defining its own:
+
+- presentation;
+- styling;
+- user interaction;
+- application logic.
+
+Custom widgets should access Cockpit's defined state and Action interfaces
+rather than connecting directly to NATS or physical hardware.
+
+The preferred implementation should allow custom widgets to be developed without
+requiring changes to the core Cockpit application for every new visualisation or
+operator control.
+
+### Shared telemetry/state model
+
+Cockpit should maintain a common application state/data model that can be
+consumed by widgets.
+
+This provides a similar architectural capability to Blue Robotics Cockpit's
+Data Lake, while using the ROV project's own telemetry and NATS architecture.
+
+The state model should expose appropriate:
+
+- vehicle telemetry;
+- Cockpit state;
+- camera/video state;
+- network state;
+- operator state;
+- profile state;
+- control state;
+- derived/compound values.
+
+Custom or derived variables may be supported where there is a clear use case.
+
+Widgets should consume this shared state rather than implementing their own
+NATS or WebSocket connections.
+
+### Actions
+
+Cockpit should provide a configurable Action system.
+
+Actions may eventually support operations such as:
+
+- sending an operator command through the Cockpit/Control interface;
+- switching Views;
+- starting/stopping video recording;
+- changing camera behaviour;
+- changing UI state;
+- setting a Cockpit variable;
+- invoking approved application functions.
+
+Actions must remain subject to the Cockpit/Control safety boundary.
+
+An Action must never provide a route around Control's physical safety,
+limits, timeout, or emergency-stop mechanisms.
+
+Actions should be usable from:
+
+- on-screen controls;
+- gamepad/joystick inputs;
+- other approved Cockpit events;
+- configurable UI elements.
+
+### Gamepad and joystick customisation
+
+Gamepad support should be configurable rather than hard-coded to a single
+controller.
+
+The operator should be able to map:
+
+- buttons;
+- axes;
+- modifiers;
+- dead zones;
+- direction/inversion where appropriate;
+
+to Cockpit Actions and operator-input functions.
+
+The resulting operator command must still pass through the Control service,
+which remains responsible for physical interpretation and safety.
+
+### Telemetry visualisation
+
+Cockpit should support configurable telemetry presentation rather than
+requiring every telemetry value to have a dedicated hard-coded widget.
+
+Where practical, generic indicators should allow an operator to select a
+telemetry/state variable and configure:
+
+- display name;
+- unit;
+- scaling;
+- numerical precision;
+- icon;
+- presentation style.
+
+Telemetry plotting should also be configurable, allowing an operator to select
+variables and configure useful plot parameters.
+
+### Containers and layout
+
+Widgets should be capable of being grouped into configurable containers.
+
+This allows an operator or profile author to create logical groups of:
+
+- controls;
+- status indicators;
+- telemetry;
+- diagnostic information;
+- camera controls.
+
+The layout system should support moving and resizing components without
+requiring changes to application source code.
+
+### Import/export
+
+Where practical, profiles, Views, custom widgets, Actions, and related
+configuration should support export/import using a portable representation.
+
+This is particularly important for engineering use because a carefully
+configured Cockpit interface should be reproducible across robots and
+development systems.
+
+Configuration portability must not allow unsafe or incompatible configuration
+to bypass profile validation or Control safety constraints.
+
+### Configuration ownership
+
+Customisation belongs to Cockpit, but robot capability and safety remain
+defined by the robot profile and Control service.
+
+The boundary is:
+
+    Profile
+       │
+       ├── declares available capabilities
+       │
+       ▼
+    Cockpit customisation
+       │
+       ├── Views
+       ├── Widgets
+       ├── Inputs
+       ├── Actions
+       └── Gamepad mappings
+       │
+       ▼
+    Operator command
+       │
+       ▼
+    NATS Core
+       │
+       ▼
+    Control
+       │
+       └── physical limits and safety
+
+Cockpit customisation must therefore determine **how the operator interacts
+with the robot**, not redefine **what the robot is physically permitted to do**.
+
+This customisation architecture is a design goal. Individual capabilities are
+not considered implemented until they exist in the current code and have been
+appropriately tested.
+
+### Attitude instrument
+
+The primary attitude instrument is `<rov-attitude>`, a native SVG/CSS
+virtual-horizon display.
+
+It presents the ROV's:
+
+- roll;
+- pitch.
+
+The instrument consumes attitude values from the shared TypeScript telemetry
+state and contains no NATS, WebSocket, or other transport logic.
+
+The primary attitude instrument is distinct from the separate `<rov-pitch>`
+instrument, which presents pitch-only nose-up/nose-down inclination.
+
+The ROV profile may additionally use `<rov-hud>`, which incorporates a
+virtual-horizon attitude presentation together with depth scales and a
+heading tape. The HUD is a ROV-specific composite presentation and does not
+replace the generic attitude component architecture.
+
+Invalid, unavailable, or non-numeric attitude values must be represented as
+unavailable rather than replaced with an assumed or fabricated measurement.
