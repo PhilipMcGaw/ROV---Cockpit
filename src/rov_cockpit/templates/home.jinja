@@ -125,12 +125,7 @@
                 <a class="nav-link">|</a>
             </li>
 
-            <!-- seperater -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link">|</a>
-            </li>
-
-            <!-- MQTT System/Uptime -->
+            <!-- NATS System/Uptime -->
             <li class="nav-item me-3 me-lg-0">
                 <a class="nav-link" id="upTime">Uptime</a>
             </li>
@@ -580,11 +575,11 @@
                         if (batteryLevel < 20) {
                             batteryIcon = "fa-battery-empty text-danger";
                         }
-                        // less than 40 % 
+                        // less than 40 %
                         else if (batteryLevel < 40) {
                             batteryIcon = "fa-battery-quarter text-warning";
                         }
-                        // less than 60 % 
+                        // less than 60 %
                         else if (batteryLevel < 60) {
                             batteryIcon = "fa-battery-half";
                         }
