@@ -11,7 +11,9 @@ chmod +x scripts/*.sh
 sudo bash scripts/0_provision_raspberry_pi.sh
 ```
 
-The provisioning script is the initial Raspberry Pi setup path. It installs Python, Nginx, Motion, curl, certificates and NATS Server from the configured Debian repositories; creates the Cockpit virtual environment; installs the Cockpit systemd unit; enables the services; applies the Nginx configuration; and performs service checks. It requires `sudo` because it changes system packages and services. It does not physically validate cameras, sensors, motor controllers or the ROV data link.
+The provisioning script is the initial Raspberry Pi setup path. It installs Python, Node.js/npm, Nginx, Motion, curl, certificates and NATS Server from the configured Debian repositories; creates the Cockpit virtual environment; installs the shared robot profile at `/etc/robot/profile.json`; installs the Cockpit systemd unit; enables the services; applies the Nginx configuration; and, when the sibling Control repository is available, invokes Control's networking deployment for NetworkManager, SMB, Avahi, hostname, and fallback-network configuration. It requires `sudo` because it changes system packages and services. It does not physically validate cameras, sensors, motor controllers or the ROV data link.
+
+Set `ROBOT_PROFILE` when provisioning a non-ROV robot, for example `ROBOT_PROFILE=k9 sudo bash scripts/0_provision_raspberry_pi.sh`. Set `CONTROL_ROOT` when the Control repository is not located beside Cockpit. The Control secrets file must already exist and have restrictive permissions before networking deployment is invoked.
 
 If NATS Server is unavailable from the configured Debian repositories, provisioning stops before service configuration. Add a trusted, documented repository or use the approved NATS deployment procedure; do not substitute an unverified installer.
 

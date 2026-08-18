@@ -11,6 +11,7 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - TypeScript state, topic mapping, parsing, and reconnecting WebSocket adapter.
 - Independent `<rov-depth>` Web Component consuming shared cockpit state.
 - Independent `<rov-heading>`, `<rov-attitude>`, `<rov-pitch>`, `<rov-camera-pitch>`, `<rov-battery>`, and `<rov-network-status>` Web Components consuming shared cockpit state.
+- ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay.
 - Existing instruments, camera handling, media capture/download, CSV access, authentication, and Gamepad API support remain part of the application.
 
 ## Automated-test verification

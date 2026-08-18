@@ -66,7 +66,18 @@
             />
   </head>
 
-  <body onload="menuIcons()">
+<body onload="menuIcons()">
+    <button class="rov-menu-toggle" type="button" aria-expanded="false" aria-controls="rov-menu-popover" aria-label="Open navigation menu"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+    <aside class="rov-menu-popover" id="rov-menu-popover" aria-label="Cockpit navigation" hidden>
+        <div class="rov-menu-popover__title"><i class="fa-solid fa-otter" aria-hidden="true"></i><span>ROV Cockpit</span></div>
+        <a href="/" class="rov-menu-popover__item"><i class="fa-solid fa-video"></i><span>Live</span></a>
+        <a href="/files/" class="rov-menu-popover__item"><i class="fa-solid fa-film"></i><span>Files</span></a>
+        <a href="/data/" class="rov-menu-popover__item"><i class="fa-solid fa-table-list"></i><span>Raw data</span></a>
+        <a href="/map/" class="rov-menu-popover__item"><i class="fa-solid fa-map-location-dot"></i><span>Map</span></a>
+        <a href="/cameras/" class="rov-menu-popover__item"><i class="fa-solid fa-camera"></i><span>Cameras</span></a>
+        <a href="/gamepad/" class="rov-menu-popover__item"><i class="fa-solid fa-gamepad"></i><span>Gamepad</span></a>
+        <a href="/account/" class="rov-menu-popover__item"><i class="fa-solid fa-user-shield"></i><span>Account</span></a>
+    </aside>
 
 <!-- Start your project here-->
 
@@ -156,6 +167,22 @@
 <!-- Navbar End-->
 
     <script>
+        (() => {
+            const toggle = document.querySelector('.rov-menu-toggle');
+            const panel = document.getElementById('rov-menu-popover');
+            if (!toggle || !panel) return;
+            const setOpen = (open) => {
+                toggle.setAttribute('aria-expanded', String(open));
+                toggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+                panel.hidden = !open;
+                document.body.classList.toggle('rov-menu-open', open);
+            };
+            toggle.addEventListener('click', () => setOpen(panel.hidden));
+            document.addEventListener('click', (event) => {
+                if (!panel.hidden && !panel.contains(event.target) && event.target !== toggle && !toggle.contains(event.target)) setOpen(false);
+            });
+            document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setOpen(false); });
+        })();
         fetch('/api/session', {cache: 'no-store', credentials: 'same-origin'}).then(response => response.json()).then(session => {
             const link = document.getElementById('sessionLink');
             if (!link || !session.authenticated) return;
@@ -477,6 +504,8 @@
         width: 200px;">
             <span id="camera-pitch"></span>
     </rov-camera-pitch>
+
+    <rov-hud id="rov-hud" aria-label="ROV navigation HUD"></rov-hud>
 
 <!-- These Guages are not used:
 

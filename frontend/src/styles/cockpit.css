@@ -20,3 +20,31 @@
 .rov-instrument { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
 .rov-instrument__value { font-variant-numeric: tabular-nums; }
 .rov-instrument--unavailable { color: var(--rov-status-unavailable, #adb5bd); }
+
+.rov-menu-toggle { position: fixed; z-index: 40; left: .75rem; top: 5rem; width: 3rem; height: 3rem; border: 1px solid rgba(255,255,255,.28); border-radius: .75rem; color: #fff; background: rgba(5,24,55,.72); backdrop-filter: blur(14px); box-shadow: 0 8px 24px rgba(0,0,0,.28); cursor: pointer; }
+.rov-menu-popover { position: fixed; z-index: 39; left: .75rem; top: 4.5rem; display: grid; gap: .3rem; width: 13rem; padding: .75rem; border: 1px solid rgba(255,255,255,.24); border-radius: 1rem; color: #fff; background: rgba(7,25,58,.78); backdrop-filter: blur(18px) saturate(130%); box-shadow: 0 1rem 3rem rgba(0,0,0,.35); }
+.rov-menu-popover__title { display: flex; align-items: center; gap: .55rem; padding: .5rem .65rem .75rem; border-bottom: 1px solid rgba(255,255,255,.16); font-weight: 700; }
+.rov-menu-popover__item { display: flex; align-items: center; gap: .75rem; padding: .65rem; border-radius: .6rem; color: #fff; text-decoration: none; }
+.rov-menu-popover__item:hover, .rov-menu-popover__item:focus-visible { background: rgba(255,255,255,.16); color: #fff; outline: none; }
+body.rov-menu-open::after { content: ""; position: fixed; z-index: 38; inset: 0; background: rgba(0,0,0,.12); pointer-events: none; }
+
+.rov-hud { position: fixed; inset: 4.5rem 2rem 2rem; z-index: 12; pointer-events: none; color: #fff; font-family: Arial, sans-serif; }
+.rov-hud__attitude { position: absolute; left: 50%; top: 45%; width: min(42vw, 320px); aspect-ratio: 1; transform: translate(-50%, -50%); }
+.rov-hud__attitude svg { width: 100%; height: 100%; background: #06183d; border-radius: 50%; }
+.rov-hud__bezel { fill: #07152d; stroke: #fff; stroke-width: 2; }
+.rov-hud__sky { fill: #06264f; } .rov-hud__water { fill: #071b3d; }
+.rov-hud__horizon-line, .rov-hud__marks { fill: none; stroke: #fff; stroke-width: 2; }
+.rov-hud__aircraft { fill: none; stroke: #ffb000; stroke-width: 3; stroke-linecap: round; }
+.rov-hud__centre { fill: #ffb000; }
+.rov-hud__roll, .rov-hud__pitch { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 700; }
+.rov-hud__roll { top: 1rem; } .rov-hud__pitch { bottom: 1rem; }
+.rov-hud__depth { position: absolute; top: 20%; width: 8rem; display: grid; gap: .5rem; color: #fff; font-weight: 700; }
+.rov-hud__depth--left { left: 2%; text-align: right; } .rov-hud__depth--right { right: 2%; text-align: left; }
+.rov-hud__depth i { display: block; height: 9rem; border-top: 2px solid #fff; border-bottom: 2px dotted #fff; position: relative; }
+.rov-hud__depth i::before, .rov-hud__depth i::after { content: ""; position: absolute; left: 0; right: 0; border-top: 2px dotted #fff; }
+.rov-hud__depth i::before { top: 33%; } .rov-hud__depth i::after { top: 66%; }
+.rov-hud__heading { position: absolute; left: 50%; bottom: 1rem; width: min(42vw, 360px); transform: translateX(-50%); text-align: center; font-weight: 700; }
+.rov-hud__heading [data-heading-scale] { height: 1.5rem; margin-top: .3rem; border-top: 2px solid #fff; background: repeating-linear-gradient(90deg, transparent 0 9px, #fff 9px 10px); }
+.rov-hud__heading b { position: absolute; left: 50%; top: 1.25rem; height: 1.5rem; border-left: 2px solid #ffb000; }
+body:has(#rov-hud) .compass, body:has(#rov-hud) .attitude, body:has(#rov-hud) .pitch-indicator, body:has(#rov-hud) .camera-pitch-indicator { display: none !important; }
+@media (max-width: 700px) { .rov-hud { inset: 4rem .5rem .5rem; } .rov-hud__depth { width: 4.5rem; font-size: .75rem; } .rov-hud__attitude { width: min(58vw, 280px); } }

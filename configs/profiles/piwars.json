@@ -16,6 +16,10 @@
     "drive_control": true,
     "challenge_controls": true
   },
+  "instruments": [
+    { "id": "battery", "enabled": true, "position": "top-bar" },
+    { "id": "network-status", "enabled": true, "position": "top-bar" }
+  ],
   "telemetry": {
     "battery_percentage": { "subject": "piwars.telemetry.power.battery.percentage", "unit": "%", "scale": 1, "precision": 0 },
     "battery_voltage": { "subject": "piwars.telemetry.power.battery.voltage", "unit": "V", "scale": 1, "precision": 2 },

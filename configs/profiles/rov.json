@@ -16,6 +16,16 @@
     "soundboard": false,
     "drive_control": true
   },
+  "instruments": [
+    { "id": "rov-hud", "enabled": true, "position": "navigation-overlay" },
+    { "id": "battery", "enabled": true, "position": "top-bar" },
+    { "id": "heading", "enabled": true, "position": "heading-strip" },
+    { "id": "depth", "enabled": true, "position": "depth-strip" },
+    { "id": "attitude", "enabled": true, "position": "instrument-row" },
+    { "id": "pitch", "enabled": true, "position": "instrument-row" },
+    { "id": "camera-pitch", "enabled": true, "position": "instrument-row" },
+    { "id": "network-status", "enabled": true, "position": "top-bar" }
+  ],
   "telemetry": {
     "battery_percentage": { "subject": "rov.telemetry.power.battery.percentage", "unit": "%", "scale": 1, "precision": 0 },
     "battery_voltage": { "subject": "rov.telemetry.power.battery.voltage", "unit": "V", "scale": 1, "precision": 2 },

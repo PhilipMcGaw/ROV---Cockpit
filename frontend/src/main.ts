@@ -6,6 +6,7 @@ import "./components/instruments/rov-pitch.js";
 import "./components/instruments/rov-camera-pitch.js";
 import "./components/instruments/rov-battery.js";
 import "./components/instruments/rov-network-status.js";
+import "./components/instruments/rov-hud.js";
 
 export const cockpitTelemetryStore = new TelemetryStore();
 export const cockpitTelemetrySocket = new TelemetryWebSocket(cockpitTelemetryStore);

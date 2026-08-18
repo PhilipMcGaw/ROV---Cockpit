@@ -15,6 +15,10 @@
     "drive_control": true,
     "animatronics": true
   },
+  "instruments": [
+    { "id": "battery", "enabled": true, "position": "top-bar" },
+    { "id": "network-status", "enabled": true, "position": "top-bar" }
+  ],
   "telemetry": {
     "battery_percentage": { "subject": "k9.telemetry.power.battery.percentage", "unit": "%", "scale": 1, "precision": 0 },
     "battery_voltage": { "subject": "k9.telemetry.power.battery.voltage", "unit": "V", "scale": 1, "precision": 2 },

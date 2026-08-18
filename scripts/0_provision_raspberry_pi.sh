@@ -2,6 +2,8 @@
 set -Eeuo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONTROL_ROOT="${CONTROL_ROOT:-$PROJECT_ROOT/../ROV---Control}"
+ROBOT_PROFILE="${ROBOT_PROFILE:-rov}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 
 info() { echo "[INFO] $*"; }
@@ -14,7 +16,7 @@ echo "[INFO] Project version: unversioned; see MASTER_CONTEXT.md"
 echo "[INFO] Project directory: $PROJECT_ROOT"
 echo "[INFO] Runtime: Debian system packages plus project-local Python environment"
 echo "[INFO] Operating mode: initial Raspberry Pi platform and Cockpit deployment"
-echo "[INFO] Components: Python, Nginx, Motion, NATS Server, Cockpit systemd service"
+echo "[INFO] Components: Python, Node.js/npm, Nginx, Motion, NATS Server, Cockpit, shared profile and Control networking"
 echo "[INFO] Privileged actions: apt package installation, systemd service installation and service enablement"
 
 [[ "$(uname -s)" == "Linux" ]] || fail "Unsupported operating system: $(uname -s). This script is for Raspberry Pi/Linux only."
@@ -27,13 +29,13 @@ info "Refreshing Debian package metadata."
 apt-get update || fail "apt-get update failed. Check network access, repository configuration, and system time."
 
 info "Checking that all required platform packages are available before installation."
-PACKAGES=(python3 python3-venv python3-dev nginx motion curl ca-certificates nats-server)
+PACKAGES=(python3 python3-venv python3-dev nodejs npm nginx motion curl ca-certificates nats-server)
 for package in "${PACKAGES[@]}"; do
   apt-cache show "$package" >/dev/null 2>&1 || fail "Required package is unavailable in the configured repositories: $package. Add a trusted repository or install this dependency using the documented vendor method before rerunning. No partial service configuration was attempted."
 done
 pass "All required Debian packages are available."
 
-info "Installing Python, Nginx, Motion, curl, certificates and NATS Server."
+info "Installing Python, Node.js/npm, Nginx, Motion, curl, certificates and NATS Server."
 apt-get install -y "${PACKAGES[@]}" || fail "Platform package installation failed. Review the apt diagnostics above; services have not been configured by this script."
 pass "Platform packages installed or already present."
 
@@ -57,6 +59,24 @@ install -o root -g root -m 0644 "$PROJECT_ROOT/configs/cockpit.service" /etc/sys
 systemctl daemon-reload || fail "systemd daemon reload failed after installing the Cockpit unit."
 systemctl enable nats-server nginx motion cockpit || fail "Could not enable one or more services: nats-server, nginx, motion, cockpit."
 pass "Cockpit, NATS Server, Nginx and Motion are enabled for startup."
+
+info "Installing the shared robot profile."
+PROFILE_SOURCE="$PROJECT_ROOT/configs/profiles/${ROBOT_PROFILE}.json"
+[[ -f "$PROFILE_SOURCE" ]] || fail "Robot profile is missing: $PROFILE_SOURCE. Set ROBOT_PROFILE to a valid profile name."
+install -d -o root -g root -m 0755 /etc/robot
+install -o root -g root -m 0644 "$PROFILE_SOURCE" /etc/robot/profile.json
+python3 -m json.tool /etc/robot/profile.json >/dev/null || fail "The selected robot profile is not valid JSON: $PROFILE_SOURCE"
+pass "Robot profile installed at /etc/robot/profile.json: $ROBOT_PROFILE"
+
+if [[ -x "$CONTROL_ROOT/scripts/0_deploy_network.sh" ]]; then
+  info "Invoking Control-owned networking, SMB and Avahi deployment."
+  NETWORK_CONFIG="${NETWORK_CONFIG:-$CONTROL_ROOT/configs/network.env}" \
+  NETWORK_SECRETS="${NETWORK_SECRETS:-$CONTROL_ROOT/configs/network.secrets.env}" \
+    "$CONTROL_ROOT/scripts/0_deploy_network.sh" || fail "Control networking deployment failed. Review its diagnostics before continuing."
+  pass "Control-owned networking deployment completed."
+else
+  warn "Control networking script not found at $CONTROL_ROOT/scripts/0_deploy_network.sh; networking, SMB and Avahi were not deployed. Set CONTROL_ROOT or deploy Control separately."
+fi
 
 info "Testing NATS Server availability before configuring the reverse proxy."
 systemctl is-active --quiet nats-server || systemctl start nats-server || fail "NATS Server did not start. Inspect: journalctl -u nats-server -n 50 --no-pager"

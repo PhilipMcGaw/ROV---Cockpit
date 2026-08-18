@@ -18,7 +18,11 @@ At present, robot profiles shall live in the Cockpit repository under `configs/p
 
 On the Raspberry Pi, the active profile shall be installed at a shared deployment path, initially `/etc/robot/profile.json`. Cockpit, Control, and Datalogger shall all read this same file at boot.
 
+The profile may define the robot hostname and unique fallback network identity. The current fallback network convention is `192.168.42.0/24`; fallback addresses must remain unique when multiple robots share a wired network.
+
 Each profile shall define one default camera and support any number of additional cameras. Camera device paths and stream endpoints shall be configuration data, not hard-coded application assumptions.
+
+Camera sources shall pass through an extensible processing pipeline before reaching the common Nginx stream endpoint. The pipeline shall support source adapters for Raspberry Pi CSI, USB, and ROS 2 virtual cameras, with optional processing stages such as lens de-warping. Processing stages shall be profile-configurable so they can be introduced without changing the Cockpit camera UI or Nginx routing.
 
 ## Namespace and control boundary
 

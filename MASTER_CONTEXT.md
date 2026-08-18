@@ -1,5 +1,7 @@
 # ROV Cockpit Master Context
 
+Interactive command examples assume Zsh. Shell scripts may use the interpreter declared by their shebang; documentation must keep interactive commands Zsh-compatible and identify any script-specific interpreter requirements.
+
 ## Purpose
 
 The ROV Cockpit is the operator-facing FastAPI web application. It provides view-only monitoring by default, authenticated driver/admin workflows, camera and media controls, telemetry visualisation, and browser gamepad configuration.
@@ -50,6 +52,10 @@ The Windows frontend helper validates the project-root `package.json`, runs npm 
 - The incremental frontend telemetry layer is authored in `frontend/src/`, compiled to `src/rov_cockpit/static/dist/`, and connects only to `/ws/telemetry`. It must not contain NATS clients, NATS URLs, credentials, or direct broker access. Existing inline telemetry routing remains active until instruments are migrated.
 - The depth display is the first migrated instrument Web Component: `<rov-depth>` consumes `sensor/water/depth` from the TypeScript state model, while the existing altimeter remains inline until separately migrated. Invalid or unavailable depth is displayed explicitly as `Depth unavailable`.
 
+The ROV profile includes a combined `<rov-hud>` navigation instrument. It presents roll and pitch in a central virtual horizon, depth scales at the sides, and a heading tape below. The HUD consumes shared telemetry state and does not contain transport logic. It is a ROV-specific presentation; other robot profiles may omit it.
+
+The live dashboard provides a translucent, keyboard-dismissible navigation popover for secondary Cockpit routes. The menu is an operator-interface presentation and must not obscure the primary camera/HUD status view or become a control-safety mechanism.
+
 TypeScript is compiled automatically by the frontend build helper before application launch. The helper uses project-local package installation and preserves the committed `static/dist` output when npm is unavailable; it does not modify PATH or machine-wide locations.
 
 General-purpose styling uses Pico.css with Cockpit-specific rules in `src/rov_cockpit/static/css/cockpit.css`; MDB is no longer loaded by the templates. jQuery remains an intentional legacy dependency for Flight Indicator until that library is isolated or replaced. On Linux, `scripts/1_install_dependencies.sh` may install distribution `nodejs` and `npm` packages through `apt-get` and `sudo` when absent; macOS deliberately does not install Node.js and uses existing npm or committed frontend output.
@@ -67,6 +73,8 @@ The shared profile is loaded and validated at boot before these services start. 
 Robot profiles currently live in Cockpit under `configs/profiles/`, which is the source of truth. Control and Datalogger consume the deployed active profile rather than maintaining independently edited profile copies.
 
 The runtime copy on the robot Raspberry Pi is initially `/etc/robot/profile.json`, read by Cockpit, Control, and Datalogger during boot.
+
+Camera sources use an adapter and processing pipeline before Nginx presents the stream to browsers. The pipeline must allow CSI, USB, and ROS 2 virtual cameras, with optional stages such as lens de-warping, without requiring camera-specific Cockpit UI paths.
 
 Windows automatically bootstraps the pinned official Node.js/npm archive into the ignored project-local `node-runtime/` directory when required, using checksum verification and no administrator rights. The build helper may prepend that directory to the child process PATH only while invoking npm; it does not persist or modify the Windows user/system PATH. macOS/Linux use an available npm installation and retain the committed frontend output when npm is unavailable.
 
@@ -86,6 +94,8 @@ The same rules apply to POSIX shell scripts on macOS, Linux, and Raspberry Pi. S
 
 The Raspberry Pi deployment helper `scripts/3_configure_nginx.sh` is the supported repeatable method for installing the Cockpit reverse-proxy configuration. It may require `sudo` because it changes system Nginx and systemd state; it must back up an existing site configuration before replacement, validate Nginx before reload, and report the resulting service and cache state.
 
-The separate `scripts/0_provision_raspberry_pi.sh` is the supported initial Debian-based Raspberry Pi provisioning path. It installs only the currently evidenced platform dependencies and NATS package, creates the Cockpit virtual environment, installs the Cockpit systemd unit, and enables/checks the services. If NATS is not available from configured trusted Debian repositories, it must stop and report the condition rather than use an unverified installer. `scripts/1_install_dependencies.sh` remains project-local and must not install system packages or services.
+The separate `scripts/0_provision_raspberry_pi.sh` is the supported initial Debian-based Raspberry Pi provisioning path. It installs the required Python, Node.js/npm, Nginx, Motion, and NATS packages, creates the Cockpit virtual environment, installs the selected shared robot profile, invokes the sibling Control networking deployment when available, installs the Cockpit systemd unit, and enables/checks the services. If a required package is unavailable from configured trusted Debian repositories, it must stop and report the condition rather than use an unverified installer. `scripts/1_install_dependencies.sh` remains project-local and must not install system packages or services.
+
+Provisioning also installs the selected shared robot profile at `/etc/robot/profile.json` and invokes the sibling Control repository's networking deployment when available. Control remains the owner of NetworkManager, hostname, SMB, Avahi, and fallback-network configuration; Cockpit only orchestrates these steps during initial provisioning.
 
 Scripts must reject unsupported direct UNC execution where local paths are required, validate prerequisites before dependent operations, check important external-command exit statuses, fail early with the path, consequence, and corrective action, be safe to rerun where practical, and avoid deleting or overwriting user data. Temporary files must be project-local and cleaned after success or preserved with a diagnostic path after failure. Downloads must be verified using an explicit checksum or trusted manifest where available. Vendor DLLs, SDKs, and installers remain optional or unverified until their presence and operation are confirmed, and native DLL architecture must match the active Python architecture. Output must distinguish installed, detected, available, configured, connected, bench tested, and physically validated states, and finish with an environment summary showing every check.
