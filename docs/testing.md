@@ -11,7 +11,7 @@ python -m py_compile Control/main.py Cockpit/app.py Cockpit/auth.py
 
 Confirm that the changed KiCad files open without recovery warnings and that firmware compiles for the selected board.
 
-## 2. Broker and web smoke test
+## 2. NATS and web smoke test
 
 Start NATS Server, then start Cockpit. Verify:
 
