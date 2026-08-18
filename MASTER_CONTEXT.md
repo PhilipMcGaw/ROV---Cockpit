@@ -58,6 +58,16 @@ The desktop top bar is constrained to `--rov-nav-height` (`60 px`), uses `--rov-
 
 ## Documentation-sync rule
 
+The reusable robot-profile requirements are maintained in `docs/robot-profile-requirements.md`. Cockpit is a generic robot operator UI; the ROV, K9, PiWars, and future robots are represented by validated JSON profiles. One profile is active per robot Raspberry Pi, and Cockpit and Controller must use the same profile identity and configuration hash. Operator input mapping belongs in Cockpit, while physical motor, actuator, safety, and direction mapping belongs in Controller.
+
+Cockpit, Control, and Datalogger are co-installed services on the robot Raspberry Pi and exchange messages through NATS Core. Cockpit provides operator-facing commands and telemetry presentation, Control owns hardware-facing commands and safety, and Datalogger observes and records the agreed NATS subjects without altering control messages.
+
+The shared profile is loaded and validated at boot before these services start. A profile change requires a controlled restart or reboot and is not applied live.
+
+Robot profiles currently live in Cockpit under `configs/profiles/`, which is the source of truth. Control and Datalogger consume the deployed active profile rather than maintaining independently edited profile copies.
+
+The runtime copy on the robot Raspberry Pi is initially `/etc/robot/profile.json`, read by Cockpit, Control, and Datalogger during boot.
+
 Windows automatically bootstraps the pinned official Node.js/npm archive into the ignored project-local `node-runtime/` directory when required, using checksum verification and no administrator rights. The build helper may prepend that directory to the child process PATH only while invoking npm; it does not persist or modify the Windows user/system PATH. macOS/Linux use an available npm installation and retain the committed frontend output when npm is unavailable.
 
 Any change to routes, authentication, deployment, configuration, dependencies, media behaviour, or repository boundaries must update the relevant `docs/` file and this `MASTER_CONTEXT.md` in the same change. Every change must include a consistency check of this file; if it is not a true reflection of current behaviour, correct it immediately. Documentation must remain current, use formal British English, and be written for readers with an engineering degree or equivalent technical experience.
