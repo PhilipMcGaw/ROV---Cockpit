@@ -28,11 +28,33 @@ Camera sources shall pass through an extensible processing pipeline before reach
 
 Every robot shall have a distinct namespace, such as `rov`, `k9`, or `piwars`. Command and telemetry subjects shall be distinct and shall be defined by the profile. Profile validation shall reject duplicate or ambiguous mappings.
 
+The framework NATS subject convention is dot-separated `<robot-namespace>.<service>.<message-type>.<function>`. Structured commands and telemetry use JSON payloads; NATS transport payloads remain arbitrary bytes for explicitly documented binary subjects.
+
 The Cockpit may map operator inputs to logical robot commands. It shall not map logical commands to individual motors, thrusters, or physical actuator channels. The Controller owns motor direction, mixing, inversion, limits, ramps, neutral behaviour, timeouts, emergency stop, and all hardware mappings.
+
+### Command mapping flow
+
+Command mapping is deliberately split into two stages:
+
+```text
+Gamepad / keyboard input
+        ↓
+Cockpit input mapping
+        ↓
+Namespaced logical command
+        ↓ NATS Core
+Controller command handling and robot-specific mixer
+        ↓
+Physical motor, thruster, servo, or actuator demands
+```
+
+For example, Cockpit may map a gamepad axis to `drive.forward` with a dead zone, scale, and inversion setting. It must not decide which physical motor receives that value. Control interprets `drive.forward` using the active robot's drive type and hardware mapping. An ROV may instead expose semantic axes such as `surge`, `sway`, `heave`, `yaw`, `pitch`, and `roll`; Control performs the thruster mix.
+
+Logical command messages shall be namespaced, use SI units where applicable, and carry a value plus the command/profile identity needed for validation. Control shall reject unknown, stale, out-of-range, or unsafe commands and shall apply neutral, timeout, and emergency-stop behaviour independently of Cockpit.
 
 Control also owns deployment of the approved Raspberry Pi robot-network configuration and runtime network/NATS health. Network-link loss and NATS command loss shall be handled safely by Control and shall not depend on Cockpit or Datalogger.
 
-Wi-Fi credentials and other deployment secrets, including NATS credentials, service tokens, and API keys, may initially be kept in one local, ignored Control secrets file on the robot. Secrets must not be included in the shared robot profile or committed to Git. The deployment shall use restrictive file permissions and document the required fields through a safe example template without publishing secret values.
+During development, reproducible test credentials may be committed to Git to make the services easy to move between development machines. Before a robot or shared network is used, credentials must be regenerated, the real values moved to ignored local secrets files, and those files protected with restrictive permissions. Real deployment credentials must not be stored in the shared robot profile or committed to Git. Example templates shall document the required fields without containing real deployment values.
 
 ## Example profiles
 

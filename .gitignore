@@ -3,3 +3,11 @@
 /_bootstrap_node
 node_modules/
 *.pyc
+
+# Runtime media and Datalogger exports; retain only directory placeholders.
+/media/stills/*
+!/media/stills/.gitkeep
+/media/videos/*
+!/media/videos/.gitkeep
+/media/data/csv/*
+!/media/data/csv/.gitkeep

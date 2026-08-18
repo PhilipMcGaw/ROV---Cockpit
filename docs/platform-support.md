@@ -10,12 +10,15 @@ The Cockpit web application is intended to be platform-independent. The hardware
 | Control-loop import/syntax work | Supported where dependencies install | Supported where dependencies install | Supported |
 | GPIO/I2C/SPI/PWM hardware control | Not supported | Not supported | Target platform |
 | Raspberry Pi camera and Motion service | Not supported | Not supported | Target platform |
+| Complete robot deployment baseline | Not supported | Not supported | Raspberry Pi 4/5, Raspberry Pi OS Bookworm 64-bit (`arm64`) |
 
 Use mock or disconnected hardware for Windows and macOS development. A successful Cockpit start does not prove that the physical control loop or camera stack is operational.
 
 ## Browser Gamepad API
 
 The Cockpit gamepad page uses the standard Browser Gamepad API. It is supported on Windows and macOS by current Edge, Chrome, and Firefox releases; Safari also supports it on macOS. The controller must first be paired by the operating system and exposed as a standard HID/gamepad device.
+
+Older Raspberry Pi models, Raspberry Pi OS Bullseye, 32-bit `armhf`, non-Debian ARM distributions, and non-Raspberry-Pi boards are not currently production-validated. Treat them as experimental until a clean-image installation and hardware test are recorded.
 
 For local development, serve the Cockpit from `localhost` or `127.0.0.1`. Remote deployments should use HTTPS. Firefox may require the user to press a controller button before the browser exposes the device to the page.
 

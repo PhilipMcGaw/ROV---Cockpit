@@ -1,8 +1,55 @@
 # Raspberry Pi deployment
 
+## Supported target
+
+The supported target for the complete robot installation is Raspberry Pi OS (the current name for Raspbian) based on Debian Bookworm, 64-bit `arm64`, on a Raspberry Pi 4 or 5 with at least 4 GB RAM. This is the recommended baseline for NATS Core, Nginx, Motion, NetworkManager, Samba, Avahi, and the three robot services.
+
+The provisioning script requires a Debian-based Linux system with `apt-get`; it does not currently verify the Raspberry Pi model, OS release, or CPU architecture. Raspberry Pi 3, Zero 2 W, older boards, Raspberry Pi OS Bullseye, and 32-bit `armhf` installations are not production-validated. They may run the Python application, but package availability, camera support, NATS installation, memory, and performance must be checked on the actual image before use.
+
+The complete installation is not supported on non-Debian distributions, 32-bit-only operating systems, or non-Raspberry-Pi ARM boards unless the required packages and hardware interfaces are separately verified. Development-only Cockpit testing remains supported on macOS, Windows, and general Linux without Raspberry Pi hardware.
+
+Before provisioning, record the target details:
+
+```zsh
+uname -m
+cat /etc/os-release
+getconf LONG_BIT
+```
+
+Expected baseline: `aarch64`, Raspberry Pi OS Bookworm, and `64`.
+
 On Linux, the documented default development location is `~/ROV - Cockpit`, beside the other ROV repositories. On macOS, use a user-selected workspace beneath the home directory, for example `~/Projects/ROV/ROV - Cockpit`. Raspberry Pi production deployment may use `/home/pi/ROV - Cockpit` as documented for that target. Scripts derive paths from their own location and do not require these locations to be hard-coded.
 
 ## One-time installation
+
+### Clone the sibling repositories
+
+The robot uses separate repositories for separate responsibilities, but they are installed side-by-side on the same Raspberry Pi. Clone the three runtime repositories into one common parent directory:
+
+```zsh
+mkdir -p ~/robots
+cd ~/robots
+git clone <cockpit-repository-url> ROV---Cockpit
+git clone <control-repository-url> ROV---Control
+git clone <datalogger-repository-url> ROV---Datalogger
+```
+
+The final layout is:
+
+```text
+~/robots/
+├── ROV---Cockpit/
+├── ROV---Control/
+└── ROV---Datalogger/
+```
+
+HiL/SiL normally remains on the development workstation or VM rather than on the robot:
+
+```text
+~/robots/ROV---HiL-and-SiL/
+```
+
+The Cockpit provisioning script can find Control and Datalogger automatically when they are beside Cockpit. Use `CONTROL_ROOT` or `DATALOGGER_ROOT` if either repository is stored elsewhere. The provisioning path installs the Cockpit and Datalogger virtual environments, installs both systemd units, configures the shared CSV directory, and invokes Control's networking deployment. The service files currently use the `pi` runtime account and the standard `/home/pi/ROV---...` layout.
 
 From the repository root on the target machine:
 
@@ -39,6 +86,7 @@ On Windows use `scripts\\2_start_app.bat`. On macOS, or on Linux without deploye
 |---|---|---|
 | Nginx | `configs/nginx.conf` | HTTP reverse proxy, static files, and camera stream proxy |
 | NATS Core | external ROV deployment | Inter-service messaging |
+| Datalogger | `configs/datalogger.service` | Change-only NATS telemetry logging and CSV export |
 | Motion | `configs/motion*.conf` | Camera streams |
 | Cockpit | `configs/cockpit.service` | FastAPI/Uvicorn web application |
 

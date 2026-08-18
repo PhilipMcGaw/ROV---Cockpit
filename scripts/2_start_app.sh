@@ -3,14 +3,9 @@ set -Eeuo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-if [[ "$(uname -s)" != "Linux" ]]; then
-  echo "This script targets Linux/Raspberry Pi systems." >&2
-  exit 1
-fi
-
 "$PROJECT_ROOT/scripts/build_frontend.sh"
 
-if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files cockpit.service >/dev/null 2>&1; then
+if [[ "$(uname -s)" == "Linux" ]] && command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files cockpit.service >/dev/null 2>&1; then
   if [[ "${EUID}" -ne 0 ]]; then exec sudo bash "$0" "$@"; fi
   systemctl restart motion cockpit nginx
   systemctl --no-pager --full status motion cockpit nginx || true

@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONTROL_ROOT="${CONTROL_ROOT:-$PROJECT_ROOT/../ROV---Control}"
+DATALOGGER_ROOT="${DATALOGGER_ROOT:-$PROJECT_ROOT/../ROV---Datalogger}"
 ROBOT_PROFILE="${ROBOT_PROFILE:-rov}"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 
@@ -16,13 +17,15 @@ echo "[INFO] Project version: unversioned; see MASTER_CONTEXT.md"
 echo "[INFO] Project directory: $PROJECT_ROOT"
 echo "[INFO] Runtime: Debian system packages plus project-local Python environment"
 echo "[INFO] Operating mode: initial Raspberry Pi platform and Cockpit deployment"
-echo "[INFO] Components: Python, Node.js/npm, Nginx, Motion, NATS Server, Cockpit, shared profile and Control networking"
+echo "[INFO] Components: Python, Node.js/npm, Nginx, Motion, NATS Server, Cockpit, Control, Datalogger, shared profile and networking"
 echo "[INFO] Privileged actions: apt package installation, systemd service installation and service enablement"
 
 [[ "$(uname -s)" == "Linux" ]] || fail "Unsupported operating system: $(uname -s). This script is for Raspberry Pi/Linux only."
 [[ "${EUID}" -eq 0 ]] || fail "This provisioning script must run with sudo/root because it changes system packages and services. Run: sudo bash scripts/0_provision_raspberry_pi.sh"
 [[ -f "$PROJECT_ROOT/requirements.txt" ]] || fail "Requirements file is missing: $PROJECT_ROOT/requirements.txt. Restore the Cockpit repository before continuing."
 [[ -f "$PROJECT_ROOT/configs/cockpit.service" ]] || fail "Cockpit service file is missing: $PROJECT_ROOT/configs/cockpit.service. Restore the deployment files before continuing."
+[[ -f "$DATALOGGER_ROOT/configs/datalogger.service" ]] || fail "Datalogger service file is missing: $DATALOGGER_ROOT/configs/datalogger.service. Clone Datalogger beside Cockpit or set DATALOGGER_ROOT."
+[[ -f "$DATALOGGER_ROOT/requirements.txt" ]] || fail "Datalogger requirements are missing: $DATALOGGER_ROOT/requirements.txt. Restore the repository before continuing."
 command -v apt-get >/dev/null 2>&1 || fail "apt-get is unavailable. This script supports Debian-based Raspberry Pi operating systems only."
 
 info "Refreshing Debian package metadata."
@@ -54,10 +57,21 @@ runuser -u "$PROJECT_USER" -- "$PROJECT_ROOT/.venv/bin/python" -m pip install -r
 chown -R "$PROJECT_USER:$PROJECT_GROUP" "$PROJECT_ROOT/.venv"
 pass "Cockpit Python environment installed for $PROJECT_USER."
 
+info "Installing Datalogger dependencies and shared CSV export directory."
+if [[ ! -d "$DATALOGGER_ROOT/.venv" ]]; then
+  runuser -u "$PROJECT_USER" -- python3 -m venv "$DATALOGGER_ROOT/.venv" || fail "Could not create $DATALOGGER_ROOT/.venv for $PROJECT_USER."
+fi
+runuser -u "$PROJECT_USER" -- "$DATALOGGER_ROOT/.venv/bin/python" -m pip install --upgrade pip || fail "Could not update pip in $DATALOGGER_ROOT/.venv."
+runuser -u "$PROJECT_USER" -- "$DATALOGGER_ROOT/.venv/bin/python" -m pip install -r "$DATALOGGER_ROOT/requirements.txt" || fail "Could not install Datalogger requirements."
+install -d -o "$PROJECT_USER" -g "$PROJECT_GROUP" -m 0750 "$DATALOGGER_ROOT/data" "$PROJECT_ROOT/media/data/csv"
+chown -R "$PROJECT_USER:$PROJECT_GROUP" "$DATALOGGER_ROOT/.venv" "$DATALOGGER_ROOT/data" "$PROJECT_ROOT/media"
+pass "Datalogger Python environment and shared CSV directory configured."
+
 info "Installing the Cockpit systemd unit."
 install -o root -g root -m 0644 "$PROJECT_ROOT/configs/cockpit.service" /etc/systemd/system/cockpit.service || fail "Could not install /etc/systemd/system/cockpit.service."
+install -o root -g root -m 0644 "$DATALOGGER_ROOT/configs/datalogger.service" /etc/systemd/system/datalogger.service || fail "Could not install /etc/systemd/system/datalogger.service."
 systemctl daemon-reload || fail "systemd daemon reload failed after installing the Cockpit unit."
-systemctl enable nats-server nginx motion cockpit || fail "Could not enable one or more services: nats-server, nginx, motion, cockpit."
+systemctl enable nats-server nginx motion cockpit datalogger || fail "Could not enable one or more services: nats-server, nginx, motion, cockpit, datalogger."
 pass "Cockpit, NATS Server, Nginx and Motion are enabled for startup."
 
 info "Installing the shared robot profile."
@@ -87,12 +101,14 @@ bash "$PROJECT_ROOT/scripts/3_configure_nginx.sh" || fail "Nginx configuration h
 
 info "Starting Cockpit and checking service state."
 systemctl restart cockpit || fail "Cockpit failed to start. Inspect: journalctl -u cockpit -n 50 --no-pager"
+systemctl restart datalogger || fail "Datalogger failed to start. Inspect: journalctl -u datalogger -n 50 --no-pager"
 systemctl is-active --quiet cockpit || fail "Cockpit is not active after restart. Inspect: journalctl -u cockpit -n 50 --no-pager"
+systemctl is-active --quiet datalogger || fail "Datalogger is not active after provisioning. Inspect: journalctl -u datalogger -n 50 --no-pager"
 systemctl is-active --quiet nginx || fail "Nginx is not active after provisioning. Inspect: journalctl -u nginx -n 50 --no-pager"
 systemctl is-active --quiet nats-server || fail "NATS Server is not active after provisioning. Inspect: journalctl -u nats-server -n 50 --no-pager"
-pass "Cockpit, Nginx and NATS Server are active."
+pass "Cockpit, Datalogger, Nginx and NATS Server are active."
 
 echo "[INFO] Environment summary:"
-echo "[INFO] Python=installed and configured; Nginx=installed, configured and active; Motion=installed and enabled; NATS Server=installed, enabled and active; Cockpit=installed, enabled and active."
+echo "[INFO] Python=installed and configured; Nginx=installed, configured and active; Motion=installed and enabled; NATS Server=installed, enabled and active; Cockpit=installed, enabled and active; Datalogger=installed, enabled and active; CSV export=shared with Cockpit media/SMB."
 echo "[WARN] Hardware cameras, motor controllers, sensors, network links and ROV operation are not physically validated by this script."
 echo "[INFO] Provisioning completed at $TIMESTAMP."
