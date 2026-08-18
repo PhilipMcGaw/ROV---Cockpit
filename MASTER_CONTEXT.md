@@ -1,101 +1,1287 @@
-# ROV Cockpit Master Context
+# ROV Cockpit — Master Context
 
-Interactive command examples assume Zsh. Shell scripts may use the interpreter declared by their shebang; documentation must keep interactive commands Zsh-compatible and identify any script-specific interpreter requirements.
+> **Role:** Persistent architectural and engineering context for humans and AI assistants working on ROV Cockpit.
+>
+> **Authority:** Current code and physical bench evidence > current status/roadmap > this file > older documentation and chat recollection.
+>
+> **Maintenance:** Update this file whenever a significant architectural decision, validated behaviour, deployment mechanism, safety boundary, release milestone, or roadmap priority changes.
+>
+> **Status discipline:** Never describe simulated, designed, or expected behaviour as physically validated.
 
-## Purpose
+---
 
-The ROV Cockpit is the operator-facing FastAPI web application. It provides view-only monitoring by default, authenticated driver/admin workflows, camera and media controls, telemetry visualisation, and browser gamepad configuration.
+## 1. Project purpose
 
-## Repository boundary
+ROV Cockpit is a browser-based operator interface for remotely operated and mobile robots.
 
-On Linux, the documented default is for sibling repositories to be cloned directly below the user home directory, for example `~/ROV - Cockpit`, `~/ROV - Control`, `~/ROV - Datalogger`, and `~/ROV - HiL and SiL`. On macOS, place them in a user-selected workspace beneath the home directory, for example `~/Projects/ROV/`. Scripts must still derive paths from their own location and must not depend on the current working directory. Windows remains portable and project-relative rather than assuming a literal home-directory path.
+Cockpit runs **on the Raspberry Pi installed inside the robot**. The operator connects to Cockpit using a web browser. Firefox is the preferred browser, but Chromium-based browsers and Safari should remain supported.
 
-This repository contains the Cockpit web layer only. ROV propulsion/control remains a separate service and communicates through the configured NATS Core boundary. Data logging and HiL/SiL work are separate repositories.
+The architecture is intended to support different robot types without requiring substantial changes to the generic Cockpit application.
 
-## Layout
+The initial robot profiles are:
 
-- `src/rov_cockpit/` — Python package, templates, and static assets.
-- `configs/` — deployment, camera, media, authentication-template, and reverse-proxy configuration.
-- `docs/` — operational and engineering documentation.
-- `tests/` — Cockpit tests and test guidance.
+- ROV
+- K9
+- PiWars
 
-Camera and media ownership belongs to Cockpit: camera inventory, Motion configuration, Nginx reverse-proxy configuration, still capture, rolling video retention, gallery, and downloads are maintained here. The original monolithic ROV repository must not contain duplicate camera or Nginx configuration.
+The design is deliberately influenced by Blue Robotics Cockpit, particularly its browser-based operator interface, video handling, telemetry visualisation, attitude HUD, gamepad support, extensibility, and multi-robot-type philosophy. Cockpit is not required to reproduce Blue Robotics Cockpit's implementation, but should emulate useful capabilities where appropriate.
 
-The Cockpit `/data/` page reads CSV exports from `CSV_ROOT` (default `<project>/data/csv`), permits selection of CSV sensor fields, displays a bounded preview and provides filtered downloads without modifying the source file. Datalogger storage and export production remain Datalogger responsibilities.
+---
 
-The live Cockpit instrument row includes the existing compass, attitude and depth indicators, plus a separate pitch-only attitude indicator for nose-up/nose-down inclination. It uses the NATS subject `sensor.ahrs.imu.pitch` and displays unavailable or non-numeric values without inventing a measurement. The TypeScript Web Component set includes `<rov-heading>`, `<rov-attitude>`, `<rov-pitch>`, `<rov-camera-pitch>`, `<rov-battery>`, and `<rov-network-status>`; these components consume shared state and contain no NATS or WebSocket transport logic.
+## 2. Core deployment model
 
-The live instrument row also includes a separate camera inclination indicator. It consumes `sensor/camera/main/pitch`, expressed in degrees relative to the ROV body, where `0°` is straight ahead. The camera-control implementation is responsible for converting its physical 90° servo home position into this representation. The topic and physical correspondence require bench validation before the value is treated as measured camera orientation.
+### Production
 
-The map supports optional Raspberry Pi Nginx tile caching through `MAP_TILE_PROXY=true` for mobile-link deployments. Local Windows development uses direct provider URLs by default.
-- `requirements.txt` — runtime dependencies, following the project’s TiaB-style dependency workflow.
-- `scripts/` — Windows portable WinPython installation and startup scripts, the project-local POSIX dependency installer, Raspberry Pi provisioning, and the Nginx configuration helper.
+One robot has one Raspberry Pi and one Cockpit instance.
 
-## Runtime rules
+```text
+Robot
+└── Raspberry Pi
+    ├── Cockpit
+    ├── Control
+    ├── Datalogger
+    ├── NATS Core
+    ├── Nginx
+    └── Camera/media services
+```
 
-The main `<rov-attitude>` instrument is currently a native SVG/CSS virtual-horizon preview showing roll (`r:`) and pitch (`p:`) from the shared TypeScript state. The separate pitch and camera-pitch instruments remain on the existing path; Flight Indicator is retained for those remaining legacy instruments.
+The Raspberry Pi is the robot's computing platform and remains physically installed in the robot.
 
-The dashboard includes a left-side vertical depth/altitude strip using the existing `sensor/water/depth` route and decimetre-to-metre conversion. The former lower-right Flight Indicator altimeter and top-bar Heading/Depth items have been removed; the heading strip and left-side depth/altitude strip are the active overlay presentations. Both strips use a white instrument label and amber current-value presentation. The heading strip remains an independent overlay, positioned below the top bar with fallback spacing and a foreground stacking level.
+The operator does not normally run Cockpit locally. The operator uses a browser to connect to the Cockpit instance running on the robot.
 
-The Windows frontend helper validates the project-root `package.json`, runs npm from the project root, and propagates npm and TypeScript failures before Uvicorn starts.
+### Development
 
-- Run with FastAPI/Uvicorn on port `8080`.
-- Use `PYTHONPATH=src` and the package entry point `rov_cockpit.app:app`.
-- Browser clients receive telemetry through the Cockpit WebSocket; they do not connect directly to NATS.
-- Cockpit uses NATS Core at `NATS_URL` (default `nats://127.0.0.1:4222`) and subscribes to `NATS_SUBJECT` (default `>`). NATS subjects use dots; dashboard keys retain slash notation through the transport adapter.
-- If NATS is unavailable during startup, Cockpit reports a warning and remains available for view-only UI development; live telemetry and control are unavailable until NATS is configured.
-- NATS library connection tracebacks are suppressed in this expected read-only condition; the Cockpit warning remains the authoritative status message.
-- Anonymous users remain view-only. Driver/admin access is authenticated.
-- Do not make the Cockpit the only propulsion safety layer; neutral, timeout, and emergency-stop behaviour belongs in the control service.
-- Keep paths repository-relative through `PROJECT_ROOT`; do not reintroduce assumptions about the original monolithic ROV folder.
-- On Windows, use `scripts/1_install_dependencies.bat` followed by `scripts/2_start_app.bat`. These require a local or mapped drive, install portable Python without administrator rights, and do not use `uv`.
-- The incremental frontend telemetry layer is authored in `frontend/src/`, compiled to `src/rov_cockpit/static/dist/`, and connects only to `/ws/telemetry`. It must not contain NATS clients, NATS URLs, credentials, or direct broker access. Existing inline telemetry routing remains active until instruments are migrated.
-- The depth display is the first migrated instrument Web Component: `<rov-depth>` consumes `sensor/water/depth` from the TypeScript state model, while the existing altimeter remains inline until separately migrated. Invalid or unavailable depth is displayed explicitly as `Depth unavailable`.
+Linux and Windows are supported development platforms.
 
-The ROV profile includes a combined `<rov-hud>` navigation instrument. It presents roll and pitch in a central virtual horizon, depth scales at the sides, and a heading tape below. The HUD consumes shared telemetry state and does not contain transport logic. It is a ROV-specific presentation; other robot profiles may omit it.
+Development tooling must make it straightforward to run and test Cockpit without requiring the developer workstation to reproduce the complete robot environment.
 
-The live dashboard provides a translucent, keyboard-dismissible navigation popover for secondary Cockpit routes. The menu is an operator-interface presentation and must not obscure the primary camera/HUD status view or become a control-safety mechanism.
+The standalone Windows bootstrap and portable-runtime mechanisms exist to simplify development and deployment to engineering PCs. They are **development/deployment tooling**, not the production Cockpit architecture.
 
-TypeScript is compiled automatically by the frontend build helper before application launch. The helper uses project-local package installation and preserves the committed `static/dist` output when npm is unavailable; it does not modify PATH or machine-wide locations.
+---
 
-General-purpose styling uses Pico.css with Cockpit-specific rules in `src/rov_cockpit/static/css/cockpit.css`; MDB is no longer loaded by the templates. jQuery remains an intentional legacy dependency for Flight Indicator until that library is isolated or replaced. On Linux, `scripts/1_install_dependencies.sh` may install distribution `nodejs` and `npm` packages through `apt-get` and `sudo` when absent; macOS deliberately does not install Node.js and uses existing npm or committed frontend output.
+## 3. Operating system
 
-The desktop top bar is constrained to `--rov-nav-height` (`60 px`), uses `--rov-nav-font-size` (`0.75 rem`, approximately 75 % of the normal root size) for explicit text sizing, with non-wrapping navigation and controlled horizontal scrolling for narrower desktop viewports. Heading and network overlays use the same custom-property anchor and `--rov-overlay-gap` (`8 px`) so they do not touch the bar when it is resized.
+The production platform is:
 
-## Documentation-sync rule
+> **Raspberry Pi OS, the Debian-based operating system provided by the Raspberry Pi Foundation.**
 
-The reusable robot-profile requirements are maintained in `docs/robot-profile-requirements.md`. Cockpit is a generic robot operator UI; the ROV, K9, PiWars, and future robots are represented by validated JSON profiles. One profile is active per robot Raspberry Pi, and Cockpit and Controller must use the same profile identity and configuration hash. Operator input mapping belongs in Cockpit, while physical motor, actuator, safety, and direction mapping belongs in Controller.
+Cockpit should avoid unnecessary dependencies on a particular workstation operating system.
 
-Cockpit, Control, and Datalogger are co-installed services on the robot Raspberry Pi and exchange messages through NATS Core. Cockpit provides operator-facing commands and telemetry presentation, Control owns hardware-facing commands and safety, and Datalogger observes and records the agreed NATS subjects without altering control messages.
+Windows and Linux are development platforms. Production assumptions must not be derived from Windows-specific development tooling.
 
-The shared profile is loaded and validated at boot before these services start. A profile change requires a controlled restart or reboot and is not applied live.
+---
 
-Robot profiles currently live in Cockpit under `configs/profiles/`, which is the source of truth. Control and Datalogger consume the deployed active profile rather than maintaining independently edited profile copies.
+## 4. Repository boundary
 
-The runtime copy on the robot Raspberry Pi is initially `/etc/robot/profile.json`, read by Cockpit, Control, and Datalogger during boot.
+Cockpit is maintained separately from the other robot services.
 
-Camera sources use an adapter and processing pipeline before Nginx presents the stream to browsers. The pipeline must allow CSI, USB, and ROS 2 virtual cameras, with optional stages such as lens de-warping, without requiring camera-specific Cockpit UI paths.
+The intended repository boundaries are:
 
-Windows automatically bootstraps the pinned official Node.js/npm archive into the ignored project-local `node-runtime/` directory when required, using checksum verification and no administrator rights. The build helper may prepend that directory to the child process PATH only while invoking npm; it does not persist or modify the Windows user/system PATH. macOS/Linux use an available npm installation and retain the committed frontend output when npm is unavailable.
+```text
+ROV - Cockpit
+ROV - Control
+ROV - Datalogger
+ROV - HiL and SiL
+```
 
-Any change to routes, authentication, deployment, configuration, dependencies, media behaviour, or repository boundaries must update the relevant `docs/` file and this `MASTER_CONTEXT.md` in the same change. Every change must include a consistency check of this file; if it is not a true reflection of current behaviour, correct it immediately. Documentation must remain current, use formal British English, and be written for readers with an engineering degree or equivalent technical experience.
+Cockpit owns the operator-facing web application.
 
-Before implementation, inspect this document and the existing implementation. Treat this document as the architectural source of truth, avoid unrelated improvements, preserve working behaviour rather than changing style for its own sake, introduce no unrequested frameworks or dependencies, and prefer the smallest safe change. After implementation, run relevant tests, run the application where practical, check browser-facing behaviour, check imports and static assets, verify the WebSocket telemetry path, update this document if architecture or behaviour changed, and report exact changes and known limitations.
+Control owns hardware-facing control and safety.
 
-Where SI units are used, place a space between the numerical value and the unit symbol, for example `5 m`, `12 V`, and `20 °C`. Use the degree symbol `°` by preference for angles.
+Datalogger owns telemetry/data recording and generation of recorded data files.
 
-## Windows scripting and deployment standard
+HiL/SiL is maintained separately and is outside the Cockpit architectural scope.
 
-The enforceable documentation policy is `docs/documentation-policy.md`, contributor guidance is `CONTRIBUTING.md`, and the maintained current-state record is `docs/status.md`. The standard-library audit `tests/test_documentation.py` and pull-request classifier `tests/documentation_change_policy.py` must pass locally and in CI. Its maintainable path rules and documented exemptions are held in `tests/documentation_change_policy.json`. Status statements must distinguish implemented, automated-test verified, bench-tested, production-validated, and planned or unverified behaviour.
+The repositories communicate through defined interfaces rather than importing each other's implementation.
 
-Future Windows batch, PowerShell, and launcher scripts must use a deliberately verbose diagnostic style with formal British English, explicit `[INFO]`, `[PASS]`, `[WARN]`, `[FAIL]`, and `[SKIP]` labels, and an initial project/environment summary. Scripts must derive absolute paths from their own location, resolve tools and DLLs from project-relative paths, avoid modifying PATH, the registry, system directories, or machine-wide locations, and require no administrator rights unless a documented third-party driver or SDK explicitly requires them.
+---
 
-The same rules apply to POSIX shell scripts on macOS, Linux, and Raspberry Pi. Shell scripts must use strict error handling, derive paths from the script location, avoid unapproved system changes, validate prerequisites, check important command exit statuses, preserve diagnostic information after failure, and report the final environment state clearly.
+## 5. Service architecture
 
-The Raspberry Pi deployment helper `scripts/3_configure_nginx.sh` is the supported repeatable method for installing the Cockpit reverse-proxy configuration. It may require `sudo` because it changes system Nginx and systemd state; it must back up an existing site configuration before replacement, validate Nginx before reload, and report the resulting service and cache state.
+The production robot uses three primary application services:
 
-The separate `scripts/0_provision_raspberry_pi.sh` is the supported initial Debian-based Raspberry Pi provisioning path. It installs the required Python, Node.js/npm, Nginx, Motion, and NATS packages, creates the Cockpit virtual environment, installs the selected shared robot profile, invokes the sibling Control networking deployment when available, installs the Cockpit systemd unit, and enables/checks the services. If a required package is unavailable from configured trusted Debian repositories, it must stop and report the condition rather than use an unverified installer. `scripts/1_install_dependencies.sh` remains project-local and must not install system packages or services.
+```text
+                    ┌─────────────────────┐
+                    │      Operator       │
+                    │  Firefox preferred  │
+                    └──────────┬──────────┘
+                               │
+                          HTTP/WebSocket
+                               │
+                    ┌──────────▼──────────┐
+                    │      Cockpit        │
+                    │  Operator interface │
+                    └──────────┬──────────┘
+                               │
+                           NATS Core
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+              ▼                ▼                ▼
+          Control          Datalogger      Other services
+              │                │
+              ▼                ▼
+          Hardware        Recorded data
+```
 
-Provisioning also installs the selected shared robot profile at `/etc/robot/profile.json` and invokes the sibling Control repository's networking deployment when available. Control remains the owner of NetworkManager, hostname, SMB, Avahi, and fallback-network configuration; Cockpit only orchestrates these steps during initial provisioning.
+### Cockpit
 
-Scripts must reject unsupported direct UNC execution where local paths are required, validate prerequisites before dependent operations, check important external-command exit statuses, fail early with the path, consequence, and corrective action, be safe to rerun where practical, and avoid deleting or overwriting user data. Temporary files must be project-local and cleaned after success or preserved with a diagnostic path after failure. Downloads must be verified using an explicit checksum or trusted manifest where available. Vendor DLLs, SDKs, and installers remain optional or unverified until their presence and operation are confirmed, and native DLL architecture must match the active Python architecture. Output must distinguish installed, detected, available, configured, connected, bench tested, and physically validated states, and finish with an environment summary showing every check.
+Cockpit owns:
+
+- operator presentation;
+- browser UI;
+- operator input;
+- gamepad/keyboard mapping;
+- telemetry visualisation;
+- camera/media controls;
+- camera presentation;
+- navigation/HUD presentation;
+- access to recorded CSV files;
+- publication of operator commands to the configured NATS boundary.
+
+Cockpit does **not** own physical actuator control or the robot's ultimate safety response.
+
+### Control
+
+Control owns:
+
+- hardware-facing commands;
+- motor and actuator control;
+- physical direction mapping;
+- hardware limits;
+- neutral behaviour;
+- command timeouts;
+- failsafe behaviour;
+- emergency-stop behaviour;
+- physical safety.
+
+Cockpit must never become the robot's only propulsion or actuator safety layer.
+
+### Datalogger
+
+Datalogger owns:
+
+- telemetry recording;
+- generation of recorded CSV files;
+- long-term data storage;
+- data logging configuration;
+- recording of agreed NATS subjects.
+
+Datalogger observes the system and must not alter control messages.
+
+Cockpit may provide access to recorded CSV files for operator download, but does not own CSV generation or long-term data storage.
+
+---
+
+## 6. NATS messaging
+
+NATS Core is the selected internal messaging middleware.
+
+Cockpit communicates with Control and other robot services through NATS.
+
+Cockpit does not communicate directly with physical hardware.
+
+NATS subjects use dot notation. Any Cockpit-specific slash notation is handled by the appropriate transport/state adapter rather than changing the NATS convention.
+
+Default configuration:
+
+```text
+NATS_URL=nats://127.0.0.1:4222
+NATS_SUBJECT=>
+```
+
+If NATS is unavailable during development startup, Cockpit may remain available for view-only UI development. Live telemetry and control are unavailable until NATS becomes available.
+
+Expected NATS connection failures must be presented as an explicit Cockpit warning rather than exposing unnecessary library connection tracebacks.
+
+### NATS JetStream
+
+**NATS JetStream is explicitly out of scope for Cockpit.**
+
+Do not introduce JetStream for telemetry persistence, recording, or unrelated functionality without a deliberate architectural decision.
+
+---
+
+## 7. Browser architecture
+
+The operator communicates with Cockpit through the browser.
+
+Firefox is the preferred browser.
+
+Cockpit should also support:
+
+- Chromium-based browsers;
+- Safari.
+
+Browser compatibility must therefore avoid unnecessary browser-specific APIs unless a justified compatibility layer exists.
+
+The browser communicates with Cockpit through the application's HTTP and WebSocket interfaces.
+
+Browser clients do not connect directly to NATS.
+
+The frontend must not contain:
+
+- NATS credentials;
+- NATS connection URLs;
+- NATS clients;
+- direct broker access.
+
+---
+
+## 8. FastAPI and WebSocket architecture
+
+Cockpit is implemented as a FastAPI web application.
+
+The application is served through Uvicorn during development and appropriate production service configuration on the Raspberry Pi.
+
+Default development port:
+
+```text
+8080
+```
+
+The Python package entry point is:
+
+```text
+rov_cockpit.app:app
+```
+
+The source tree is:
+
+```text
+src/rov_cockpit/
+```
+
+The browser receives live telemetry through the Cockpit WebSocket.
+
+The intended flow is:
+
+```text
+NATS
+  │
+  ▼
+Cockpit transport/state layer
+  │
+  ▼
+Cockpit WebSocket
+  │
+  ▼
+Browser TypeScript state
+  │
+  ▼
+UI components
+```
+
+Transport logic must remain outside presentation components.
+
+---
+
+## 9. Frontend architecture
+
+The incremental TypeScript frontend is maintained in:
+
+```text
+frontend/src/
+```
+
+and compiled into:
+
+```text
+src/rov_cockpit/static/dist/
+```
+
+The frontend build runs automatically through the application development/startup tooling where required.
+
+The compiled output may remain usable when npm is unavailable, provided the committed output is present.
+
+The TypeScript frontend communicates only with Cockpit's browser-facing interfaces.
+
+### Web Components
+
+The TypeScript Web Component set includes:
+
+- `<rov-heading>`
+- `<rov-attitude>`
+- `<rov-pitch>`
+- `<rov-camera-pitch>`
+- `<rov-battery>`
+- `<rov-network-status>`
+- `<rov-depth>`
+- `<rov-hud>`
+
+These components consume shared application state.
+
+They must not contain NATS or WebSocket transport logic.
+
+The `<rov-depth>` component is the first migrated instrument. It consumes:
+
+```text
+sensor/water/depth
+```
+
+from the TypeScript state model.
+
+Invalid or unavailable depth must be represented explicitly as:
+
+> `Depth unavailable`
+
+The existing inline telemetry routing may remain during incremental migration. Components should be migrated individually rather than introducing an unnecessary frontend rewrite.
+
+---
+
+## 10. Current dashboard presentation
+
+The main attitude instrument is a native SVG/CSS virtual horizon showing:
+
+- roll;
+- pitch.
+
+The ROV HUD combines:
+
+- central roll/pitch virtual horizon;
+- side depth scales;
+- heading tape.
+
+The HUD is a robot-specific presentation. Other robot profiles may omit it.
+
+### Heading
+
+The heading strip is an independent overlay positioned below the top navigation bar.
+
+### Depth
+
+The active depth presentation uses a left-side vertical depth/altitude strip.
+
+It uses:
+
+```text
+sensor/water/depth
+```
+
+with the required decimetre-to-metre conversion.
+
+The former lower-right Flight Indicator altimeter and top-bar Heading/Depth presentations are not active dashboard presentations.
+
+### Pitch
+
+A separate pitch-only attitude indicator provides nose-up/nose-down inclination.
+
+It consumes:
+
+```text
+sensor.ahrs.imu.pitch
+```
+
+Non-numeric or unavailable values must not be replaced with invented measurements.
+
+### Camera pitch
+
+A separate camera inclination indicator consumes:
+
+```text
+sensor/camera/main/pitch
+```
+
+The value is expressed in degrees relative to the ROV body, where:
+
+```text
+0 ° = straight ahead
+```
+
+The camera-control implementation is responsible for converting its physical servo home position into this representation.
+
+The relationship between the physical servo position and the reported value must be bench validated before the value is described as a measured camera orientation.
+
+---
+
+## 11. Camera and media architecture
+
+Camera support is a Cockpit responsibility.
+
+Cockpit owns:
+
+- camera inventory;
+- camera configuration;
+- camera-control presentation;
+- media controls;
+- recording controls;
+- still capture;
+- gallery/download presentation;
+- Nginx media configuration;
+- reverse-proxy configuration related to camera streams.
+
+The original monolithic ROV repository must not contain duplicate Cockpit camera or Nginx configuration.
+
+### Camera abstraction
+
+Camera sources must be separated from the browser-facing Cockpit UI.
+
+The architecture should support different camera sources without requiring camera-specific Cockpit UI paths.
+
+Potential sources include:
+
+- CSI cameras;
+- USB cameras;
+- other supported Linux camera sources.
+
+ROS 2 is **not a Cockpit dependency** and is outside the Cockpit architecture.
+
+If another system provides a camera source to Cockpit in future, it should do so through an appropriate camera/media boundary.
+
+---
+
+## 12. Canonical camera-processing pipeline
+
+The camera system must support processing between capture and output.
+
+The intended architecture is:
+
+```text
+Camera
+  │
+  ▼
+Capture
+  │
+  ▼
+Camera processing pipeline
+  │
+  ├── lens correction
+  ├── dewarping
+  ├── optional image processing
+  │
+  ▼
+Canonical processed video
+  │
+  ├───────────────► WebRTC
+  │                    │
+  │                    ▼
+  │                 Browser
+  │
+  ├───────────────► Recording
+  │                    │
+  │                    ▼
+  │                   Disk
+  │
+  └───────────────► Still capture
+```
+
+There should be a **single canonical processed video feed**.
+
+The WebRTC stream and saved video should originate from that same processed feed.
+
+Therefore:
+
+> **The video presented to the operator and the recorded video should represent the same post-processing output.**
+
+This avoids recording a distorted/raw stream while displaying a corrected stream.
+
+### Lens correction
+
+The processing pipeline should support lens correction and dewarping for different optical systems, including:
+
+- conventional fisheye lenses;
+- panoramic/360° cameras;
+- other lenses requiring geometric correction.
+
+Dewarping should occur **before recording** where practical so that saved video is already corrected.
+
+Camera-specific correction algorithms belong in the media-processing layer rather than in Cockpit presentation components.
+
+---
+
+## 13. WebRTC
+
+WebRTC is the preferred browser-facing live-video transport where it provides the simplest practical integration with the Raspberry Pi camera/media stack.
+
+The architecture should favour:
+
+- low latency;
+- browser compatibility;
+- efficient video transport;
+- local/offline operation;
+- multiple camera streams where practical;
+- reuse of the canonical processed video feed.
+
+WebRTC implementation details should remain behind the camera/media abstraction rather than becoming embedded throughout the Cockpit frontend.
+
+The final WebRTC implementation should be selected based on practical Raspberry Pi performance, browser compatibility, maintainability, and integration with the rest of the production stack.
+
+---
+
+## 14. Media storage and Nginx
+
+Nginx provides the required production reverse-proxy/media functionality.
+
+Camera and media configuration belongs to Cockpit.
+
+The supported repeatable Nginx deployment helper is:
+
+```text
+scripts/3_configure_nginx.sh
+```
+
+It may require `sudo` because it changes system Nginx and systemd state.
+
+It must:
+
+- back up an existing site configuration before replacement;
+- validate Nginx before reload;
+- report the resulting service state;
+- report media/cache state;
+- fail safely when validation fails.
+
+---
+
+## 15. Maps
+
+The map supports optional Raspberry Pi Nginx tile caching through:
+
+```text
+MAP_TILE_PROXY=true
+```
+
+This is intended for deployments where external map access should be reduced or controlled.
+
+Local development may use direct provider URLs by default.
+
+Because Cockpit is offline-first, the core application must not depend on Internet connectivity merely to load or operate its fundamental UI.
+
+---
+
+## 16. Offline-first architecture
+
+Cockpit is designed **offline first**.
+
+Internet access is optional and must not be a fundamental runtime dependency for the robot.
+
+The robot must be capable of operating when no external network is available.
+
+When an external network is unavailable, the Raspberry Pi can provide the robot's local network services, including:
+
+- DHCP;
+- gateway/network access as appropriate;
+- wireless access;
+- captive-portal presentation.
+
+The intended operator flow is:
+
+```text
+Existing network available
+        │
+        ▼
+Robot Raspberry Pi
+        │
+        ▼
+Operator browser
+
+
+No existing network
+        │
+        ▼
+Robot Raspberry Pi
+        │
+   DHCP / gateway
+        │
+   local access point
+        │
+        ▼
+Captive portal
+        │
+        ▼
+Operator browser
+```
+
+Cockpit's essential UI assets must therefore be locally available.
+
+Do not introduce mandatory CDN dependencies for core functionality.
+
+Network configuration remains a system/networking responsibility rather than becoming a Cockpit-specific implementation concern.
+
+---
+
+## 17. Authentication and authorisation
+
+Authentication is an architectural requirement but may be implemented later in the roadmap.
+
+The architecture must allow authentication and authorisation to be added without a significant Cockpit redesign.
+
+The intended access model is:
+
+- unauthenticated access may be restricted to explicitly permitted view-only functionality;
+- driver functionality requires appropriate authorisation;
+- administrative functionality requires appropriate authorisation;
+- privileged operations must not fundamentally depend on anonymous access.
+
+Authentication must eventually be tested as a real security boundary.
+
+A visible login interface alone is not evidence that authentication is correctly implemented.
+
+---
+
+## 18. Robot profiles
+
+Robot-specific behaviour is defined through validated profiles.
+
+The initial profiles are:
+
+- ROV;
+- K9;
+- PiWars.
+
+The purpose of profiles is to allow the same Cockpit, Control, and Datalogger service architecture to operate on different robot types and configurations without substantial application-code changes.
+
+The repository source of truth is:
+
+```text
+configs/profiles/
+```
+
+The deployed runtime copy is initially:
+
+```text
+/etc/robot/profile.json
+```
+
+The distinction is deliberate:
+
+```text
+Repository profile
+      │
+      │ deployment
+      ▼
+/etc/robot/profile.json
+      │
+      ├─────────────┐
+      ▼             ▼
+   Cockpit       Control
+      │             │
+      └──────┬──────┘
+             ▼
+         Datalogger
+```
+
+Cockpit, Control, and Datalogger must use the same active profile identity and configuration hash.
+
+A profile change requires a controlled restart or reboot.
+
+Profiles are not intended to be edited independently by each service.
+
+---
+
+## 19. Operator input versus hardware control
+
+Robot profiles must preserve the architectural boundary between operator intent and physical implementation.
+
+Cockpit owns:
+
+- gamepad mapping;
+- keyboard mapping;
+- operator-facing control configuration;
+- generation of operator commands.
+
+Control owns:
+
+- physical motor mapping;
+- actuator mapping;
+- direction;
+- limits;
+- safety;
+- physical command execution.
+
+This allows the same operator interface to work with different robot hardware without embedding hardware-specific motor logic into Cockpit.
+
+---
+
+## 20. CSV data access
+
+Cockpit provides an operator-facing mechanism to access and download recorded CSV files.
+
+The `/data/` page reads CSV exports from:
+
+```text
+CSV_ROOT
+```
+
+with the default:
+
+```text
+<project>/data/csv
+```
+
+Cockpit does not generate the source CSV files.
+
+Datalogger remains responsible for telemetry recording and CSV generation.
+
+Cockpit may provide:
+
+- file selection;
+- bounded previews where useful;
+- filtering;
+- downloads.
+
+Cockpit must not modify the source recording as a side effect of viewing or downloading it.
+
+---
+
+## 21. Repository layout
+
+The expected Cockpit repository structure is:
+
+```text
+src/rov_cockpit/
+    Python package
+    templates
+    static assets
+
+frontend/src/
+    TypeScript source
+    Web Components
+    shared frontend state
+
+configs/
+    deployment configuration
+    camera configuration
+    media configuration
+    authentication templates
+    reverse-proxy configuration
+    profiles/
+
+docs/
+    engineering documentation
+    operational documentation
+    deployment documentation
+    robot-profile requirements
+    current status
+
+tests/
+    application tests
+    frontend-related tests
+    documentation tests
+    deployment/documentation policy tests
+
+scripts/
+    development setup
+    frontend setup/build
+    Raspberry Pi provisioning
+    Nginx configuration
+    application startup
+```
+
+Scripts must derive paths from their own location and must not depend on the current working directory.
+
+---
+
+## 22. Development environment
+
+Interactive shell examples should be compatible with Zsh.
+
+Shell scripts may use the interpreter specified by their shebang.
+
+Development tooling should avoid unnecessary system-wide changes.
+
+The Windows standalone bootstrap exists to simplify development on engineering PCs where the user may not have administrator rights.
+
+It must:
+
+- use a project-local Python runtime;
+- install project dependencies locally;
+- avoid system-wide Python requirements;
+- avoid modifying the Windows registry;
+- avoid modifying the Windows user/system `PATH`;
+- avoid requiring administrator rights unless an explicitly documented external dependency requires them.
+
+The Windows bootstrap is not a production Cockpit deployment mechanism.
+
+Linux development tooling should similarly prefer project-local environments and avoid unnecessary machine-wide modifications.
+
+---
+
+## 23. Frontend build and dependencies
+
+The frontend uses TypeScript.
+
+The frontend helper:
+
+- validates the project-root `package.json`;
+- runs npm from the project root;
+- propagates npm failures;
+- propagates TypeScript failures;
+- builds the frontend before application launch where required.
+
+Windows may bootstrap the pinned official Node.js/npm archive into the ignored project-local:
+
+```text
+node-runtime/
+```
+
+when required.
+
+Checksum verification must be used for downloaded runtime archives.
+
+The helper may temporarily modify the child-process `PATH` when invoking npm, but must not persist changes to the user's or system's environment.
+
+Linux development may use an existing npm installation.
+
+Committed frontend output may be used where npm is unavailable and the required generated files already exist.
+
+---
+
+## 24. Styling
+
+General-purpose styling uses Pico.css.
+
+Cockpit-specific styling is maintained in:
+
+```text
+src/rov_cockpit/static/css/cockpit.css
+```
+
+MDB is no longer loaded by the templates.
+
+jQuery remains an intentional legacy dependency for Flight Indicator until that library is isolated or replaced.
+
+Do not introduce another frontend framework solely for stylistic reasons.
+
+---
+
+## 25. UI layout rules
+
+The desktop top bar uses:
+
+```text
+--rov-nav-height: 60 px
+--rov-nav-font-size: 0.75 rem
+```
+
+Navigation is non-wrapping and supports controlled horizontal scrolling on narrower desktop viewports.
+
+Heading and network overlays use the same custom-property positioning anchor.
+
+The overlay gap is:
+
+```text
+--rov-overlay-gap: 8 px
+```
+
+Overlays must remain visually separated from the navigation bar when the navigation height changes.
+
+The navigation popover is a presentation feature for secondary Cockpit routes.
+
+It must not:
+
+- obscure the primary camera/HUD view unnecessarily;
+- become a control-safety mechanism;
+- interfere with safety-critical operator actions.
+
+---
+
+## 26. Safety boundary
+
+Cockpit is an operator interface.
+
+It is **not the authoritative safety layer**.
+
+Safety-critical behaviour must remain functional if Cockpit crashes, disconnects, loses its browser connection, or stops publishing commands.
+
+Control must provide appropriate:
+
+- command timeouts;
+- neutral behaviour;
+- failsafe behaviour;
+- emergency-stop behaviour;
+- hardware protection.
+
+Any change affecting control commands must therefore consider the consequences of:
+
+- lost browser connection;
+- lost WebSocket connection;
+- lost NATS connection;
+- Cockpit process failure;
+- stale commands;
+- invalid operator input.
+
+---
+
+## 27. Documentation policy
+
+Documentation is part of the implementation.
+
+A behavioural, interface, driver, deployment, architecture, or validation change must update the relevant documentation in the same change.
+
+The master context must also be updated when the change materially affects:
+
+- architecture;
+- deployment;
+- service ownership;
+- safety;
+- robot profiles;
+- camera/media behaviour;
+- authentication;
+- communication interfaces;
+- validation status;
+- roadmap priorities.
+
+The authoritative documentation policy is:
+
+```text
+docs/documentation-policy.md
+```
+
+Contributor guidance is:
+
+```text
+CONTRIBUTING.md
+```
+
+Current project status is:
+
+```text
+docs/status.md
+```
+
+Documentation tests and policy checks must pass locally and in CI where applicable.
+
+---
+
+## 28. Engineering documentation standard
+
+Project documentation uses formal British English.
+
+Use:
+
+- `licence`, not `license`, where referring to the noun;
+- `behaviour`;
+- `optimise`;
+- `centre`.
+
+Use the Oxford comma where it improves clarity.
+
+Write for readers with an engineering degree or equivalent professional experience.
+
+Prefer:
+
+- clear technical terminology;
+- explicit assumptions;
+- concise engineering prose;
+- SI units;
+- measurable statements;
+- explicit validation status.
+
+Avoid marketing language unless discussing an external product or design reference.
+
+---
+
+## 29. Units and numerical notation
+
+Use SI units with a space between the numerical value and the unit:
+
+```text
+5 m
+12 V
+500 mA
+100 ms
+1 Hz
+20 °C
+```
+
+Use the degree symbol `°` for angles and temperatures where appropriate.
+
+Use `degC` only where required by a machine-readable field or protocol.
+
+CSV event and metadata timestamps use local time in:
+
+```text
+YYYY-MM-DD HH:MM:SS.ffff
+```
+
+format.
+
+They contain exactly four fractional-second digits and do not use the previous ISO `T`, UTC offset, or six-digit precision.
+
+---
+
+## 30. Validation status
+
+Every hardware or software status statement must distinguish the actual level of evidence.
+
+Use terminology such as:
+
+- designed;
+- planned;
+- implemented;
+- simulated;
+- software-tested;
+- bench-tested;
+- bench-probed;
+- physically validated;
+- production-validated;
+- production-proven;
+- unverified.
+
+Do not state or imply physical validation when only code, documentation, a vendor SDK, or a simulator has been used.
+
+Never invent hardware validation results.
+
+---
+
+## 31. Coding standards
+
+Python must follow PEP 8.
+
+https://peps.python.org/pep-0008/
+
+Changes should favour the smallest safe implementation that satisfies the requirement.
+
+Do not introduce:
+
+- unnecessary frameworks;
+- unnecessary dependencies;
+- unrelated refactoring;
+- duplicate configuration systems;
+- new architectural layers without a demonstrated requirement.
+
+---
+
+## 32. Raspberry Pi provisioning
+
+The supported initial Raspberry Pi provisioning path is:
+
+```text
+scripts/0_provision_raspberry_pi.sh
+```
+
+It is responsible for initial Raspberry Pi OS provisioning required by Cockpit.
+
+It may install required system packages such as:
+
+- Python;
+- Node.js/npm where required;
+- Nginx;
+- Motion where required by the selected media implementation;
+- NATS;
+- other explicitly approved production dependencies.
+
+It may create the Cockpit Python environment, deploy the selected robot profile, install the Cockpit systemd unit, and enable/check relevant services.
+
+It must not silently install software from unverified sources.
+
+If a required package is unavailable from configured trusted repositories, provisioning must stop and report the condition.
+
+The provisioning process must be safe to rerun where practical.
+
+---
+
+## 33. Network ownership
+
+Robot network configuration is a system/networking responsibility.
+
+Control remains the owner of robot networking configuration where the deployment requires:
+
+- NetworkManager;
+- hostname;
+- SMB;
+- Avahi;
+- fallback networking;
+- related robot network configuration.
+
+Cockpit may orchestrate required deployment steps but must not duplicate network configuration ownership.
+
+The Raspberry Pi must support the offline-first operator connection model described above.
+
+---
+
+## 34. Script engineering standard
+
+Future Windows, PowerShell, Bash, and POSIX scripts should use a deliberately diagnostic engineering style.
+
+Scripts should:
+
+- derive absolute paths from their own location;
+- validate prerequisites;
+- check important external-command exit statuses;
+- use explicit paths for project tools and native libraries;
+- avoid modifying machine-wide environment state;
+- be safe to rerun where practical;
+- preserve useful diagnostics after failure;
+- avoid deleting user data;
+- clean temporary files after successful execution;
+- preserve failed temporary state where useful for diagnosis;
+- verify downloaded files using checksums or trusted manifests;
+- report the final environment state.
+
+Diagnostic output should use:
+
+```text
+[INFO]
+[PASS]
+[WARN]
+[FAIL]
+[SKIP]
+```
+
+Failures should identify:
+
+1. the affected component or path;
+2. why the failure matters;
+3. the practical corrective action.
+
+The final summary must distinguish between:
+
+- detected;
+- installed;
+- configured;
+- available;
+- connected;
+- bench-tested;
+- physically validated.
+
+Vendor drivers, SDKs, and native components may require separate administrator-approved installation. Such exceptions must be explicitly documented.
+
+---
+
+## 35. AI assistant working rules
+
+When working on Cockpit:
+
+1. Read this file first.
+2. Inspect the current implementation when exact behaviour matters.
+3. Treat current code and physical evidence as stronger evidence than this file.
+4. Distinguish implementation from validation.
+5. Never invent a hardware validation result.
+6. Identify documentation/code inconsistencies rather than silently choosing one interpretation.
+7. Preserve established architecture unless the user explicitly changes it.
+8. Keep physical hardware communication out of Cockpit.
+9. Keep safety-critical behaviour in Control.
+10. Keep telemetry recording and CSV generation in Datalogger.
+11. Keep camera/media transport behind appropriate adapters and processing boundaries.
+12. Keep WebRTC and camera-specific processing out of generic presentation components.
+13. Do not introduce ROS 2 as a Cockpit dependency.
+14. Do not introduce NATS JetStream.
+15. Preserve offline-first operation.
+16. Avoid mandatory Internet/CDN dependencies.
+17. Preserve the one-robot/one-Cockpit deployment model.
+18. Use robot profiles rather than duplicating robot-specific application logic.
+19. Treat authentication as an architectural requirement even where implementation is deferred.
+20. Prefer the smallest safe change.
+21. Avoid unrelated refactoring.
+22. Update documentation when behaviour or architecture changes.
+
+Before implementing a change, consider:
+
+- Which architectural layer owns this?
+- Does it cross the Cockpit/Control/Datalogger boundary?
+- Does it affect physical safety?
+- Does it affect authentication or authorisation?
+- Does it affect offline operation?
+- Does it affect the robot profile?
+- Does it affect camera/video processing?
+- Can it be tested without physical hardware?
+- Does it introduce a new dependency?
+- Does it introduce an Internet dependency?
+- Does it require administrator privileges?
+- Is it part of the current milestone or future scope?
+
+After implementation:
+
+- run relevant tests;
+- check imports;
+- check static assets;
+- check frontend compilation where applicable;
+- verify the WebSocket telemetry path;
+- run the application where practical;
+- check browser-facing behaviour;
+- verify deployment scripts where practical;
+- update relevant documentation;
+- update this master context if architecture or current behaviour changed;
+- clearly report known limitations and unverified behaviour.
+
+---
+
+## 36. Current architectural priorities
+
+The current priorities are:
+
+1. Maintain a reliable Raspberry Pi-based Cockpit deployment.
+2. Provide a browser-first operator interface.
+3. Preserve offline-first operation.
+4. Establish a clean Cockpit/Control/Datalogger/NATS boundary.
+5. Support robot-specific behaviour through profiles rather than duplicated application code.
+6. Establish a robust camera/media pipeline with WebRTC as the preferred live-video transport.
+7. Ensure WebRTC and recorded video originate from the same processed camera feed.
+8. Support lens correction and dewarping before recording where practical.
+9. Build a useful ROV HUD and telemetry presentation.
+10. Provide configurable operator input/gamepad support.
+11. Ensure authentication can be introduced without architectural rework.
+12. Maintain compatibility with Firefox, Chromium-based browsers, and Safari.
+13. Keep the production system maintainable on Raspberry Pi OS.
+14. Keep development tooling practical for Windows and Linux engineering workstations.
+
+---
+
+## 37. Explicitly out of scope
+
+The following are outside the current Cockpit architecture unless deliberately reconsidered:
+
+- NATS JetStream;
+- ROS 2 as a Cockpit dependency;
+- HiL/SiL implementation;
+- direct hardware communication from Cockpit;
+- Cockpit-owned motor/actuator safety;
+- Cockpit-owned CSV generation;
+- mandatory Internet connectivity;
+- mandatory external CDN resources;
+- simultaneous multi-robot operation from one Cockpit instance;
+- unnecessary frontend framework replacement;
+- unrelated repository-wide refactoring.
+
+---
+
+## 38. Design direction
+
+Cockpit should evolve towards a capable, generic browser-based robot ground-control interface inspired by the strengths of Blue Robotics Cockpit.
+
+Useful capabilities to emulate include:
+
+- configurable operator interfaces;
+- multiple video streams;
+- low-latency browser video;
+- video recording;
+- still capture;
+- telemetry visualisation;
+- attitude/HUD presentation;
+- gamepad support;
+- configurable operator controls;
+- robot-specific profiles;
+- extensible widgets and UI components;
+- useful operator diagnostics.
+
+These are design directions rather than claims that all features are currently implemented.
+
+The architecture should allow these capabilities to be added incrementally without undermining the fundamental boundaries:
+
+```text
+Browser
+   │
+   ▼
+Cockpit
+   │
+   ▼
+NATS Core
+   │
+   ├── Control
+   └── Datalogger
+
+Camera
+   │
+   ▼
+Processing
+   │
+   ├── WebRTC ─────► Browser
+   └── Recording ──► Disk
+```
+
+**The fundamental production model remains:**
+
+> **One robot → one Raspberry Pi → one Cockpit → one operator browser connection.**
+
+The Raspberry Pi lives in the robot, Cockpit is the operator-facing web application, Control owns physical control and safety, Datalogger owns recorded data, and NATS Core provides the internal service boundary.
