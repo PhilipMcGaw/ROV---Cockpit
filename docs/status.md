@@ -32,6 +32,7 @@ The current repository state is not recorded as bench-tested or production-valid
 
 - Profile-driven selection of instrument modules beyond the current ROV HUD and shared status instruments.
 - Robot-backed persistence for instrument visual settings.
+- A depth-scale configuration GUI, with robot-backed minimum, maximum, graduation-step, visibility-window, and presentation settings.
 - CSS Grid, Pico.css, Vue component migration, and complete TypeScript frontend migration.
 - Reproducible TypeScript generation in every supported development environment.
 - Complete production authentication and authorisation hardening.

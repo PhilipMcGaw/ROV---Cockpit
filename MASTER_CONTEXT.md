@@ -1281,6 +1281,11 @@ The ROV profile may provide:
 Other robot profiles may select different instruments or omit ROV-specific
 navigation displays.
 
+The roadmap includes a reusable depth-scale configuration GUI. It will expose
+the depth range, graduation step, visible viewport region, line length, and
+readout presentation, then save those values with the active robot profile so
+the HUD does not require code changes for routine scale adjustments.
+
 This allows the same underlying Cockpit application to support ROVs, ground
 robots, and other platforms without forcing inappropriate instruments onto
 their interfaces.

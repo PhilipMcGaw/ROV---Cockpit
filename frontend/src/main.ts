@@ -1,6 +1,6 @@
 import { TelemetryStore } from "./telemetry/store.js";
 import { TelemetryWebSocket } from "./transport/telemetry-websocket.js";
-import "./components/instruments/rov-hud.js";
+import "./components/instruments/rov-hud.js?v=5";
 import "./components/instrument-style-editor.js";
 import { mountVueStatusInstrument, RovBatteryVue, RovVoltageVue } from "./vue/status-instruments.js";
 
@@ -15,6 +15,7 @@ declare global {
 
 // Publish the store before Vue instruments mount so they can subscribe during setup.
 window.rovCockpitTelemetry = cockpitTelemetryStore;
+window.dispatchEvent(new Event("rov-telemetry-ready"));
 
 // This layer is intentionally passive during the incremental migration. Existing
 // inline instruments continue to use their current router until they are migrated.
