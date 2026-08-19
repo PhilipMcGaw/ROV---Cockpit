@@ -137,7 +137,7 @@ Run it from the Cockpit repository or provide the script’s absolute path. It c
 
 The operator interface is then available at the Raspberry Pi address on HTTP port `80`. Nginx owns browser caching for `/static/`; the Python application does not need to emit no-cache headers for static assets.
 
-The live page presents roll, pitch, depth, and heading together through the combined `<rov-hud>` instrument. It does not substitute default values when telemetry is unavailable or invalid.
+The live page presents roll, pitch, depth, and heading together through the combined `<rov-hud>` instrument. The page also loads the committed Vue runtime vendor asset through its import map for migrated visual components. It does not substitute default values when telemetry is unavailable or invalid.
 
 The live page also includes a separate camera inclination indicator. It listens to `sensor/camera/main/pitch`, expressed in degrees relative to the ROV body, where `0°` is straight ahead. The camera-control implementation must convert its physical 90° servo home position to this representation. Until the topic is supplied by the control system and bench tested, the indicator remains unvalidated.
 

@@ -1522,7 +1522,13 @@ The templates use the readable Pico CSS file and Cockpit-specific CSS.
 jQuery remains an intentional legacy dependency for Flight Indicator until
 that library is isolated or replaced.
 
-Do not introduce another frontend framework solely for stylistic reasons.
+Vue 3 is the approved frontend framework for the incremental migration. New
+interactive Cockpit surfaces may be implemented as Vue components. Existing
+Web Components remain supported during migration so the FastAPI/WebSocket
+telemetry contract and deployed pages continue to work while each surface is
+ported and tested. The battery status instrument is the first migrated visual
+surface; depth, network status, HUD, style editing, and simulator migration
+remain staged work.
 
 ---
 

@@ -93,7 +93,7 @@
             <!-- Battery Level -->
             <!-- NATS system/state-of-charge -->
             <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link"><rov-battery></rov-battery></a>
+                <a class="nav-link"><span data-vue-instrument="battery"></span></a>
             </li>
 
             <!-- NATS battery/voltage -->
@@ -216,6 +216,10 @@
 
     </style>
 
+    <!-- The TypeScript build emits ES modules; map Vue to the committed runtime vendor asset. -->
+    <script type="importmap">
+        {"imports":{"vue":"/static/dist/vendor/vue.runtime.esm-browser.prod.js"}}
+    </script>
     <script type="module" src="/static/dist/main.js"></script>
     <script type="module" src="/static/dist/components/rov-depth.js"></script>
 

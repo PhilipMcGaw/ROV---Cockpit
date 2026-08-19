@@ -88,7 +88,7 @@ This process expects the target hardware and a reachable NATS Core server. Do no
 
 The Cockpit NATS connection uses `NATS_URL` and `NATS_SUBJECT`, defaulting to `nats://127.0.0.1:4222` and `>`. Browsers receive telemetry through the Cockpit WebSocket and do not connect directly to NATS.
 
-The TypeScript telemetry layer is authored under `frontend/src/` and emits browser state from `/ws/telemetry` into `window.rovCockpitTelemetry`. The ROV navigation display is the combined `<rov-hud>` Web Component; battery, depth, and network status remain reusable shared components. NATS logic remains exclusively in FastAPI.
+The TypeScript telemetry layer is authored under `frontend/src/` and emits browser state from `/ws/telemetry` into `window.rovCockpitTelemetry`. Vue 3 is now an approved frontend dependency. The migration is incremental: the battery status instrument is now rendered by Vue from `frontend/src/vue/status-instruments.ts`; the existing `<rov-hud>` remains the compatibility renderer until the HUD is ported. The browser module import map resolves Vue to the committed `static/dist/vendor/vue.runtime.esm-browser.prod.js` asset so the no-bundler TypeScript build can run on the robot. Depth, network status, style editing, and simulator surfaces remain staged for migration. NATS logic remains exclusively in FastAPI.
 
 The launcher calls `scripts/build_frontend.bat` on Windows or `scripts/build_frontend.sh` on macOS/Linux before starting the application. These scripts compile TypeScript into `src/rov_cockpit/static/dist/` when npm is available. If npm is unavailable, they report a warning and retain the existing compiled output so the Cockpit can still start.
 

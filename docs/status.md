@@ -10,7 +10,8 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - Browser telemetry through the FastAPI WebSocket endpoint.
 - TypeScript state, topic mapping, parsing, and reconnecting WebSocket adapter.
 - Independent `<rov-depth>` Web Component consuming shared cockpit state.
-- Independent `<rov-battery>`, `<rov-network-status>`, and `<rov-depth>` Web Components consuming shared cockpit state.
+- Vue-rendered battery status instrument consuming shared cockpit state.
+- Independent `<rov-network-status>` and `<rov-depth>` Web Components consuming shared cockpit state until their Vue ports are completed.
 - ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay. This is the intended navigation instrument for the ROV cockpit.
 - The former standalone heading band and depth meter have been removed; heading and depth are rendered only within the combined HUD.
 - The HUD presentation has been rebuilt toward the reference design: transparent central attitude arcs, side roll scales, a right-side depth scale, and a bottom heading tape. Heading marks are projected relative to the live heading in 3-degree increments, with major/cardinal labels and a fixed centre pointer.
@@ -30,7 +31,7 @@ The current repository state is not recorded as bench-tested or production-valid
 
 - Profile-driven selection of instrument modules beyond the current ROV HUD and shared status instruments.
 - Robot-backed persistence for instrument visual settings.
-- CSS Grid, Pico.css, and complete TypeScript frontend migration.
+- CSS Grid, Pico.css, Vue component migration, and complete TypeScript frontend migration.
 - Reproducible TypeScript generation in every supported development environment.
 - Complete production authentication and authorisation hardening.
 
