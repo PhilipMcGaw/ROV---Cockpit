@@ -2,7 +2,7 @@
 
 ## Architecture
 
-The application layer is FastAPI served by Uvicorn. NATS is accessed only by the server; the browser receives telemetry through `/ws/telemetry`. The TypeScript telemetry layer is under `frontend/src` and its browser output is under `src/rov_cockpit/static/dist`. Web Components are being introduced incrementally while the existing Jinja and inline-JavaScript interface remains in service.
+The application layer is FastAPI served by Uvicorn. NATS is accessed only by the server; the browser receives telemetry through `/ws/telemetry`. The TypeScript telemetry layer is under `frontend/src` and its browser output is under `src/rov_cockpit/static/dist`. The ROV navigation display is the combined `<rov-hud>` Web Component; shared status instruments remain separate components.
 
 ## Implemented behaviour
 
@@ -10,8 +10,10 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - Browser telemetry through the FastAPI WebSocket endpoint.
 - TypeScript state, topic mapping, parsing, and reconnecting WebSocket adapter.
 - Independent `<rov-depth>` Web Component consuming shared cockpit state.
-- Independent `<rov-heading>`, `<rov-attitude>`, `<rov-pitch>`, `<rov-camera-pitch>`, `<rov-battery>`, and `<rov-network-status>` Web Components consuming shared cockpit state.
-- ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay.
+- Independent `<rov-battery>`, `<rov-network-status>`, and `<rov-depth>` Web Components consuming shared cockpit state.
+- ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay. This is the intended navigation instrument for the ROV cockpit.
+- Reusable HUD style editor with live colour and line-thickness controls; settings currently persist in browser local storage.
+- Development sensor simulator page with runtime enable/disable control and slider-driven browser telemetry injection.
 - Existing instruments, camera handling, media capture/download, CSV access, authentication, and Gamepad API support remain part of the application.
 
 ## Automated-test verification
@@ -24,7 +26,8 @@ The current repository state is not recorded as bench-tested or production-valid
 
 ## Planned or unverified
 
-- Migration of remaining instruments to Web Components.
+- Profile-driven selection of instrument modules beyond the current ROV HUD and shared status instruments.
+- Robot-backed persistence for instrument visual settings.
 - CSS Grid, Pico.css, and complete TypeScript frontend migration.
 - Reproducible TypeScript generation in every supported development environment.
 - Complete production authentication and authorisation hardening.

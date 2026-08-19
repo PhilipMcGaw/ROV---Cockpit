@@ -28,23 +28,26 @@
 .rov-menu-popover__item:hover, .rov-menu-popover__item:focus-visible { background: rgba(255,255,255,.16); color: #fff; outline: none; }
 body.rov-menu-open::after { content: ""; position: fixed; z-index: 38; inset: 0; background: rgba(0,0,0,.12); pointer-events: none; }
 
-.rov-hud { position: fixed; inset: 4.5rem 2rem 2rem; z-index: 12; pointer-events: none; color: #fff; font-family: Arial, sans-serif; }
+.rov-hud { --hud-text: #fff; --hud-line: #fff; --hud-accent: #ffb000; --hud-line-width: 2px; position: fixed; inset: 4.5rem 2rem 2rem; z-index: 12; pointer-events: none; color: var(--hud-text); font-family: Arial, sans-serif; }
 .rov-hud__attitude { position: absolute; left: 50%; top: 45%; width: min(42vw, 320px); aspect-ratio: 1; transform: translate(-50%, -50%); }
 .rov-hud__attitude svg { width: 100%; height: 100%; background: #06183d; border-radius: 50%; }
 .rov-hud__bezel { fill: #07152d; stroke: #fff; stroke-width: 2; }
 .rov-hud__sky { fill: #06264f; } .rov-hud__water { fill: #071b3d; }
-.rov-hud__horizon-line, .rov-hud__marks { fill: none; stroke: #fff; stroke-width: 2; }
-.rov-hud__aircraft { fill: none; stroke: #ffb000; stroke-width: 3; stroke-linecap: round; }
-.rov-hud__centre { fill: #ffb000; }
+.rov-hud__horizon-line, .rov-hud__marks { fill: none; stroke: var(--hud-line); stroke-width: var(--hud-line-width); }
+.rov-hud__aircraft { fill: none; stroke: var(--hud-accent); stroke-width: calc(var(--hud-line-width) + 1px); stroke-linecap: round; }
+.rov-hud__centre { fill: var(--hud-accent); }
 .rov-hud__roll, .rov-hud__pitch { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 700; }
 .rov-hud__roll { top: 1rem; } .rov-hud__pitch { bottom: 1rem; }
 .rov-hud__depth { position: absolute; top: 20%; width: 8rem; display: grid; gap: .5rem; color: #fff; font-weight: 700; }
 .rov-hud__depth--left { left: 2%; text-align: right; } .rov-hud__depth--right { right: 2%; text-align: left; }
-.rov-hud__depth i { display: block; height: 9rem; border-top: 2px solid #fff; border-bottom: 2px dotted #fff; position: relative; }
-.rov-hud__depth i::before, .rov-hud__depth i::after { content: ""; position: absolute; left: 0; right: 0; border-top: 2px dotted #fff; }
-.rov-hud__depth i::before { top: 33%; } .rov-hud__depth i::after { top: 66%; }
+.rov-hud__depth i { display: flex; flex-direction: column; height: 9rem; overflow: hidden; border-top: 2px solid #fff; border-bottom: 2px dotted #fff; position: relative; transform: translateY(var(--depth-offset, 0)); }
+.rov-hud__depth i span { height: 1.8rem; border-top: 1px dotted #fff; font: 10px Arial, sans-serif; padding: .25rem; opacity: .8; }
 .rov-hud__heading { position: absolute; left: 50%; bottom: 1rem; width: min(42vw, 360px); transform: translateX(-50%); text-align: center; font-weight: 700; }
-.rov-hud__heading [data-heading-scale] { height: 1.5rem; margin-top: .3rem; border-top: 2px solid #fff; background: repeating-linear-gradient(90deg, transparent 0 9px, #fff 9px 10px); }
+.rov-hud__heading [data-heading-scale] { display: flex; justify-content: space-around; height: 1.5rem; margin-top: .3rem; border-top: 2px solid #fff; transform: translateX(var(--heading-offset, 0)); transition: transform .2s ease-out; overflow: hidden; }
+.rov-hud__heading [data-heading-scale] span { min-width: 2.4rem; font: 10px Arial, sans-serif; padding-top: .3rem; opacity: .8; }
+.rov-hud__heading [data-heading-scale] .cardinal { font-weight: 700; color: #ffb000; }
 .rov-hud__heading b { position: absolute; left: 50%; top: 1.25rem; height: 1.5rem; border-left: 2px solid #ffb000; }
-body:has(#rov-hud) .compass, body:has(#rov-hud) .attitude, body:has(#rov-hud) .pitch-indicator, body:has(#rov-hud) .camera-pitch-indicator { display: none !important; }
+.instrument-style-editor { position: fixed; z-index: 30; top: 5rem; right: 1rem; pointer-events: auto; color: #fff; }
+.instrument-style-editor__toggle, .instrument-style-editor__popover { border: 1px solid rgba(255,255,255,.25); border-radius: .75rem; color: #fff; background: rgba(7,25,58,.82); backdrop-filter: blur(18px); box-shadow: 0 1rem 3rem rgba(0,0,0,.35); }
+.instrument-style-editor__toggle { padding: .6rem .8rem; cursor: pointer; } .instrument-style-editor__popover { display: grid; gap: .7rem; width: 15rem; margin-top: .5rem; padding: 1rem; } .instrument-style-editor__popover h2 { margin: 0; font-size: 1rem; } .instrument-style-editor__popover label { display: grid; grid-template-columns: 1fr auto; gap: .4rem; align-items: center; font-size: .85rem; } .instrument-style-editor__popover input[type=color] { width: 2.5rem; height: 1.8rem; padding: 0; } .instrument-style-editor__popover input[type=range] { grid-column: 1 / -1; width: 100%; } .instrument-style-editor__actions { display: flex; justify-content: space-between; gap: .5rem; } .instrument-style-editor__actions button { flex: 1; }
 @media (max-width: 700px) { .rov-hud { inset: 4rem .5rem .5rem; } .rov-hud__depth { width: 4.5rem; font-size: .75rem; } .rov-hud__attitude { width: min(58vw, 280px); } }

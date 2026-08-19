@@ -19,13 +19,16 @@ body.rov-menu-open::after { content: ""; position: fixed; z-index: 38; inset: 0;
 .nav-item { margin: 0; } .nav-link { color: inherit; text-decoration: none; }
 .card { padding: var(--rov-panel-gap); border: 1px solid var(--rov-panel-border); border-radius: var(--rov-panel-radius); background: var(--rov-panel-background); }
 .form-control { width: 100%; } .btn { display: inline-block; width: auto; } .table-responsive { overflow-x: auto; }
-.rov-attitude { display: block; position: relative; width: 200px; height: 200px; color: #fff; }
-.rov-attitude__svg { display: block; width: 100%; height: 100%; background: #06183d; border-radius: 50%; }
-.rov-attitude__bezel { fill: #07152d; stroke: #dce8f5; stroke-width: 2; }
-.rov-attitude__sky { fill: #06264f; } .rov-attitude__water { fill: #071b3d; }
-.rov-attitude__horizon { transform-origin: 120px 120px; transition: transform .18s ease-out; }
-.rov-attitude__horizon-line, .rov-attitude__marks { fill: none; stroke: #fff; stroke-width: 2; }
-.rov-attitude__aircraft { fill: none; stroke: #ffb000; stroke-width: 3; stroke-linecap: round; }
-.rov-attitude__centre { fill: #ffb000; } .rov-attitude__reference { stroke: #fff; stroke-width: 2; }
-.rov-attitude__readouts { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: .55rem 0; pointer-events: none; font: 600 14px Arial, sans-serif; }
-.rov-attitude__readouts output { color: #fff; } .rov-attitude[data-status="unavailable"] { opacity: .65; }
+.instrument-style-editor { position: fixed; z-index: 30; top: 5rem; right: 1rem; pointer-events: auto; color: #fff; }
+.instrument-style-editor__toggle, .instrument-style-editor__popover { border: 1px solid rgba(255,255,255,.25); border-radius: .75rem; color: #fff; background: rgba(7,25,58,.82); backdrop-filter: blur(18px); box-shadow: 0 1rem 3rem rgba(0,0,0,.35); }
+.instrument-style-editor__toggle { padding: .6rem .8rem; cursor: pointer; } .instrument-style-editor__popover { display: grid; gap: .7rem; width: 15rem; margin-top: .5rem; padding: 1rem; } .instrument-style-editor__popover h2 { margin: 0; font-size: 1rem; } .instrument-style-editor__popover label { display: grid; grid-template-columns: 1fr auto; gap: .4rem; align-items: center; font-size: .85rem; } .instrument-style-editor__popover input[type=color] { width: 2.5rem; height: 1.8rem; padding: 0; } .instrument-style-editor__popover input[type=range] { grid-column: 1 / -1; width: 100%; }
+.rov-hud { position: fixed; inset: 4.5rem 2rem 2rem; z-index: 12; pointer-events: none; color: #fff; font-family: Arial, sans-serif; }
+.rov-hud__attitude { position: absolute; left: 50%; top: 45%; width: min(42vw, 320px); aspect-ratio: 1; transform: translate(-50%, -50%); }
+.rov-hud__attitude svg { width: 100%; height: 100%; background: #06183d; border-radius: 50%; }
+.rov-hud__bezel { fill: #07152d; stroke: #fff; stroke-width: 2; } .rov-hud__sky { fill: #06264f; } .rov-hud__water { fill: #071b3d; }
+.rov-hud__horizon-line, .rov-hud__marks { fill: none; stroke: #fff; stroke-width: 2; } .rov-hud__aircraft { fill: none; stroke: #ffb000; stroke-width: 3; stroke-linecap: round; } .rov-hud__centre { fill: #ffb000; }
+.rov-hud__roll, .rov-hud__pitch { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 700; } .rov-hud__roll { top: 1rem; } .rov-hud__pitch { bottom: 1rem; }
+.rov-hud__depth { position: absolute; top: 20%; width: 8rem; display: grid; gap: .5rem; color: #fff; font-weight: 700; } .rov-hud__depth--left { left: 2%; text-align: right; } .rov-hud__depth--right { right: 2%; text-align: left; }
+.rov-hud__depth i { display: flex; flex-direction: column; height: 9rem; overflow: hidden; border-top: 2px solid #fff; border-bottom: 2px dotted #fff; position: relative; transform: translateY(var(--depth-offset, 0)); } .rov-hud__depth i span { height: 1.8rem; border-top: 1px dotted #fff; font: 10px Arial, sans-serif; padding: .25rem; opacity: .8; }
+.rov-hud__heading { position: absolute; left: 50%; bottom: 1rem; width: min(42vw, 360px); transform: translateX(-50%); text-align: center; font-weight: 700; } .rov-hud__heading [data-heading-scale] { display: flex; justify-content: space-around; height: 1.5rem; margin-top: .3rem; border-top: 2px solid #fff; transform: translateX(var(--heading-offset, 0)); transition: transform .2s ease-out; overflow: hidden; } .rov-hud__heading [data-heading-scale] span { min-width: 2.4rem; font: 10px Arial, sans-serif; padding-top: .3rem; opacity: .8; } .rov-hud__heading [data-heading-scale] .cardinal { font-weight: 700; color: #ffb000; } .rov-hud__heading b { position: absolute; left: 50%; top: 1.25rem; height: 1.5rem; border-left: 2px solid #ffb000; }
+@media (max-width: 700px) { .rov-hud { inset: 4rem .5rem .5rem; } .rov-hud__depth { width: 4.5rem; font-size: .75rem; } .rov-hud__attitude { width: min(58vw, 280px); } }

@@ -4,10 +4,10 @@ After=network.target
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/ROV\x20-\x20Cockpit
-ExecStart=/bin/bash /home/pi/ROV\x20-\x20Cockpit/run.sh
+WorkingDirectory=/home/pi/ROV---Cockpit
+ExecStart=/bin/bash /home/pi/ROV---Cockpit/run.sh
 Environment=MAP_TILE_PROXY=true
-Environment=CSV_ROOT=/home/pi/ROV\x20-\x20Cockpit/media/data/csv
+Environment=CSV_ROOT=/home/pi/ROV---Cockpit/media/data/csv
 Restart=always
 StandardOutput=file:/home/pi/cockpit_output.log
 StandardError=file:/home/pi/cockpit_output.log

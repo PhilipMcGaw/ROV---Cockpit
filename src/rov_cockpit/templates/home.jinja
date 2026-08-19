@@ -54,16 +54,8 @@
                 href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"
             /> -->
 
-        <!-- JQuery -->
+        <!-- JQuery remains available to legacy pages; cockpit instruments use Web Components. -->
             <script src="/static/js/jquery.js"></script>
-            <script src="/static/js/jquery.flightindicators.js?v=rov-20260815"></script>
-
-        <!-- Flight Indicators library styles -->
-            <link
-                rel="stylesheet"
-                type="text/css"
-                href="/static/css/flightindicators.css"
-            />
   </head>
 
 <body onload="menuIcons()">
@@ -76,6 +68,7 @@
         <a href="/map/" class="rov-menu-popover__item"><i class="fa-solid fa-map-location-dot"></i><span>Map</span></a>
         <a href="/cameras/" class="rov-menu-popover__item"><i class="fa-solid fa-camera"></i><span>Cameras</span></a>
         <a href="/gamepad/" class="rov-menu-popover__item"><i class="fa-solid fa-gamepad"></i><span>Gamepad</span></a>
+        <a href="/simulator/" class="rov-menu-popover__item"><i class="fa-solid fa-flask"></i><span>Sensor simulator</span></a>
         <a href="/account/" class="rov-menu-popover__item"><i class="fa-solid fa-user-shield"></i><span>Account</span></a>
     </aside>
 
@@ -149,6 +142,9 @@
             </li>
             <li class="nav-item me-3 me-lg-0">
                 <a class="nav-link" href="/map/"><i class="fa-solid fa-map-location-dot"></i>&nbsp;Map</a>
+            </li>
+            <li class="nav-item me-3 me-lg-0">
+                <a class="nav-link" href="/simulator/"><i class="fa-solid fa-flask"></i>&nbsp;Simulator</a>
             </li>
             <li class="nav-item me-3 me-lg-0">
                 <a class="nav-link" id="sessionLink" href="/login"><i class="fa-solid fa-right-to-bracket"></i>&nbsp;Login</a>
@@ -463,89 +459,12 @@
     </div>
 -->
 
-<!-- Guages - see https://github.com/sebmatton/jQuery-Flight-Indicators -->
-    <rov-heading class="compass" id="compass"
-        style="position: fixed;
-        right: 20px;
-        bottom: 20px;
-        height: 200px;
-        width: 200px;">
-            <span id="heading"></span>
-    </rov-heading>
-
-    <rov-attitude class="attitude" id="attitude"
-        style="position: fixed;
-        right: 220px;
-        bottom: 20px;
-        height: 200px;
-        width: 200px;">
-            <span id="attitude"></span>
-    </rov-attitude>
-
-    <rov-pitch class="pitch-indicator" id="pitch-indicator"
-        style="position: fixed;
-        right: 620px;
-        bottom: 20px;
-        height: 200px;
-        width: 200px;">
-            <span id="pitch"></span>
-    </rov-pitch>
-
-    <rov-camera-pitch class="camera-pitch-indicator" id="camera-pitch-indicator"
-        style="position: fixed;
-        right: 820px;
-        bottom: 20px;
-        height: 200px;
-        width: 200px;">
-            <span id="camera-pitch"></span>
-    </rov-camera-pitch>
-
     <rov-hud id="rov-hud" aria-label="ROV navigation HUD"></rov-hud>
-
-<!-- These Guages are not used:
-
-    <div  class="turn_coordinator" id="turn_coordinator"
-        style="position: fixed;
-        right: 620px;
-        bottom: 20px;
-        height: 200px;
-        width: 200px;">
-            <span id="turn_coordinator"></span> -- Turn Cordinator
-    </div>
-
-    <div  class="airspeed" id="airspeed"
-        style="position: fixed;
-        right: 820px;
-        bottom: 20px;
-        height: 200px;
-        width: 200px;">
-            <span id="airspeed"></span> -- Airspeed
-    </div>
-
-    <div  class="variometer" id="variometer"
-        style="position: fixed;
-        right: 1020px;
-        bottom: 20px;
-        height: 200px;
-        width: 200px;">
-            <span id="variometer"></span> -- Vertical Airspeed
-    </div>
--->
+    <rov-instrument-style-editor target="rov-hud" profile="rov"></rov-instrument-style-editor>
 
     <!-- End your project here-->
 
         <!-- Custom scripts -->
-
-        <script type="text/javascript">
-            // Dynamic examples
-
-            var heading = $.flightIndicator('#heading', 'heading', {heading:0, showBox: true});
-            var pitchIndicator = $.flightIndicator('#pitch', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
-            var cameraPitchIndicator = $.flightIndicator('#camera-pitch', 'attitude', {roll:0, pitch:0, size:200, showBox: true});
-            var variometer = $.flightIndicator('#variometer', 'variometer', {vario:0, showBox : false});
-            var airspeed = $.flightIndicator('#airspeed', 'airspeed', {showBox: false});
-            var turn_coordinator = $.flightIndicator('#turn_coordinator', 'turn_coordinator', {turn:0});
-        </script>
 
         <script type="text/javascript">
             const uptimeElement = document.getElementById("upTime");        // Uptime
@@ -553,7 +472,6 @@
             const socElement = document.getElementById("batteryLevel");     // State of Charge
             const tempElement = document.getElementById("temperature");     // Water Temperature
             const depthElement = document.getElementById("depth");          // Depth (this is a positive number…)
-            const compassElement = document.getElementById('compass');      // Compass bearing
 
             function router(topic, message) {
                 if (topic === "system/uptime") {
@@ -602,32 +520,12 @@
                 }
 
                 if (topic === "sensor/ahrs/imu/heading") {
-                    if (compassElement) {
-                        compassElement.innerHTML = "<i class=\"fa-regular fa-compass fa-lg\"></i> " + message.toString() + " &deg";
-                        heading.setHeading(message.toString());             // This updates the compass
-                    }
                     if (window.updateHeadingStrip) {
                         window.updateHeadingStrip(message.toString());
                     }
                 }
-
-                if (topic === "sensor/ahrs/imu/pitch") {
-                    const pitch = Number(message);
-                    if (Number.isFinite(pitch)) {
-                        pitchIndicator.setPitch(pitch);
-                    }
-                }
                 if (topic === "sensor/ahrs/imu/roll") {
-                        // Main attitude is rendered by the native <rov-attitude> component.
-                    // TC update - note that the TC appears opposite the angle of the attitude indicator, as it mirrors the actual wing up/down position
-                    turn_coordinator.setTurn((30*Math.sin(message.toString()/10))*-1);
-                  }
-
-                if (topic === "sensor/camera/main/pitch") {
-                    const cameraPitch = Number(message);
-                    if (Number.isFinite(cameraPitch)) {
-                        cameraPitchIndicator.setPitch(cameraPitch);
-                    }
+                    // Roll and pitch are rendered by the combined ROV HUD.
                 }
 
                 if (topic === "sensor/water/temperature") {

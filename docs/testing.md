@@ -5,8 +5,7 @@ Run tests in increasing order of risk. Record the date, software revision, hardw
 ## 1. Static checks
 
 ```bash
-python -m py_compile Control/main.py Cockpit/app.py
-python -m py_compile Control/main.py Cockpit/app.py Cockpit/auth.py
+python -m py_compile src/rov_cockpit/app.py src/rov_cockpit/auth.py
 ```
 
 Confirm that the changed KiCad files open without recovery warnings and that firmware compiles for the selected board.
@@ -31,7 +30,7 @@ Also verify `/ws/telemetry` in the browser, `/api/session` before and after logi
 
 ## 3. Serial protocol test
 
-Connect one controller with actuators disabled. Confirm that startup identification and heartbeat records are received, that malformed records do not crash the control loop, and that Adler-16 IDs match the documented topic.
+Connect the Cockpit to a test NATS server with actuators disabled. Confirm that telemetry is displayed, malformed payloads do not crash the web service, and browser WebSocket reconnect behaviour is visible.
 
 ## 4. Sensor test
 

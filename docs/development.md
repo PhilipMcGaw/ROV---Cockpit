@@ -88,11 +88,19 @@ This process expects the target hardware and a reachable NATS Core server. Do no
 
 The Cockpit NATS connection uses `NATS_URL` and `NATS_SUBJECT`, defaulting to `nats://127.0.0.1:4222` and `>`. Browsers receive telemetry through the Cockpit WebSocket and do not connect directly to NATS.
 
-The incremental TypeScript telemetry layer is authored under `frontend/src/` and emits browser state from `/ws/telemetry` into `window.rovCockpitTelemetry`. Depth, heading, attitude, pitch, camera pitch, battery, and network status now have independent Web Components; the remaining instruments continue to use the existing inline router. NATS logic remains exclusively in FastAPI.
+The TypeScript telemetry layer is authored under `frontend/src/` and emits browser state from `/ws/telemetry` into `window.rovCockpitTelemetry`. The ROV navigation display is the combined `<rov-hud>` Web Component; battery, depth, and network status remain reusable shared components. NATS logic remains exclusively in FastAPI.
 
 The launcher calls `scripts/build_frontend.bat` on Windows or `scripts/build_frontend.sh` on macOS/Linux before starting the application. These scripts compile TypeScript into `src/rov_cockpit/static/dist/` when npm is available. If npm is unavailable, they report a warning and retain the existing compiled output so the Cockpit can still start.
 
-The depth top-bar display is now implemented as `<rov-depth>`. It consumes the typed `sensor/water/depth` state without opening a WebSocket or knowing about NATS. The existing altimeter gauge and other instruments remain on the inline path during this incremental migration.
+The depth top-bar display is now implemented as `<rov-depth>`. It consumes the typed `sensor/water/depth` state without opening a WebSocket or knowing about NATS.
+
+## HUD style editor
+
+The main Cockpit page includes a reusable `rov-instrument-style-editor` for the ROV HUD. It provides live controls for text colour, line colour, accent colour, and line thickness. Values currently persist in browser local storage under a profile- and component-specific key; robot-backed profile persistence is planned.
+
+## Development sensor simulator
+
+The `/simulator/` page is always available from the main navigation. Its runtime switch is off by default unless `COCKPIT_ENABLE_SIMULATOR=true` is set. When enabled, sliders inject depth, heading, pitch, roll, battery voltage, and battery percentage values into the Cockpit browser telemetry path. The simulator does not publish to NATS or Control and must not be enabled during live physical robot operation.
 
 ## Camera media
 
@@ -102,7 +110,7 @@ Motion is configured for 30-minute rolling MP4 recordings by default under its t
 
 The Windows frontend build automatically bootstraps the pinned official Node.js/npm archive into the project-local `node-runtime/` directory when required. It verifies the archive against `SHASUMS256.txt`, requires no administrator rights, does not modify PATH, and rejects direct UNC execution. Linux `scripts/1_install_dependencies.sh` installs distribution `nodejs` and `npm` packages through `apt-get` and `sudo` when absent. macOS deliberately does not install Node.js; it uses available npm, while the committed compiled output remains the fallback when npm is unavailable.
 
-General-purpose page styling now uses Pico.css from the frontend dependency `@picocss/pico`. Served Pico CSS is copied to `src/rov_cockpit/static/css/pico.min.css`; Cockpit-specific variables and compatibility classes are maintained in `src/rov_cockpit/static/css/cockpit.css`. MDB is no longer loaded by the templates. jQuery remains only because the current Flight Indicator implementation requires it.
+General-purpose page styling now uses Pico.css from the frontend dependency `@picocss/pico`. Served Pico CSS is copied to `src/rov_cockpit/static/css/pico.min.css`; Cockpit-specific variables and compatibility classes are maintained in `src/rov_cockpit/static/css/cockpit.css`. MDB is no longer loaded by the templates.
 
 The Browser Gamepad API works with standard HID controllers on Windows and macOS in current Edge, Chrome, and Firefox releases; Safari is supported on macOS. Pair the controller in the operating system before opening `/gamepad/`. Firefox may require a button press before it reports the controller.
 

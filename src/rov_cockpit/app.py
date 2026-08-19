@@ -44,6 +44,8 @@ MEDIA_MIN_FREE_GB = float(os.getenv("MEDIA_MIN_FREE_GB", "2"))
 MEDIA_CONFIG_PATH = PROJECT_ROOT / "configs" / "media.json"
 USERS_PATH = PROJECT_ROOT / "configs" / "users.json"
 AUTH_SECRET = os.getenv("COCKPIT_AUTH_SECRET", "change-this-cockpit-secret")
+ENABLE_SIMULATOR = os.getenv("COCKPIT_ENABLE_SIMULATOR", "false").lower() == "true"
+simulation_enabled = ENABLE_SIMULATOR
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 nats_data: dict[str, str] = {}
@@ -69,6 +71,9 @@ class MediaConfig(BaseModel):
     """Recording settings shared by Motion and the Cockpit."""
 
     recording_minutes: int = Field(default=30, ge=1, le=240)
+
+class SimulationTelemetry(BaseModel):
+    values: dict[str, float]
 
 
 def load_media_config() -> MediaConfig:
@@ -322,7 +327,7 @@ async def favicon():
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse(request=request, name="home.jinja")
+    return templates.TemplateResponse(request=request, name="home.jinja", context={"config": {"simulator_enabled": ENABLE_SIMULATOR}})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -527,6 +532,31 @@ async def cameras_page(request: Request):
 @app.get("/gamepad/", response_class=HTMLResponse)
 async def gamepad_page(request: Request):
     return templates.TemplateResponse(request=request, name="gamepad.jinja")
+
+@app.get("/simulator/", response_class=HTMLResponse)
+async def simulator_page(request: Request):
+    return templates.TemplateResponse(request=request, name="simulator.jinja")
+
+@app.get("/api/development/simulation/state")
+async def simulation_state():
+    return {"enabled": simulation_enabled}
+
+@app.post("/api/development/simulation/state")
+async def set_simulation_state(payload: dict[str, bool]):
+    global simulation_enabled
+    simulation_enabled = bool(payload.get("enabled", False))
+    return {"enabled": simulation_enabled}
+
+@app.post("/api/development/simulation")
+async def simulation_telemetry(payload: SimulationTelemetry):
+    if not simulation_enabled:
+        raise HTTPException(status_code=409, detail="Enable simulation mode before sending simulated telemetry")
+    for topic, value in payload.values.items():
+        with nats_lock:
+            nats_data[topic] = str(value)
+        if telemetry_loop is not None and telemetry_loop.is_running():
+            asyncio.run_coroutine_threadsafe(broadcast_telemetry(topic, str(value)), telemetry_loop)
+    return {"ok": True, "topics": len(payload.values)}
 
 
 @app.get("/api/cameras")

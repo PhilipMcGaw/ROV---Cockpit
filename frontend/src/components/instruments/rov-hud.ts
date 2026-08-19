@@ -13,8 +13,8 @@ export class RovHud extends HTMLElement {
     this.setAttribute("role", "img");
     this.setAttribute("aria-label", "ROV roll, pitch, depth and heading HUD");
     this.innerHTML = `
-      <div class="rov-hud__depth rov-hud__depth--left"><span>Depth</span><output data-depth-left>-- m</output><i></i></div>
-      <div class="rov-hud__depth rov-hud__depth--right"><span>Depth</span><output data-depth-right>-- m</output><i></i></div>
+      <div class="rov-hud__depth rov-hud__depth--left"><span>Depth</span><output data-depth-left>-- m</output><i data-depth-scale></i></div>
+      <div class="rov-hud__depth rov-hud__depth--right"><span>Depth</span><output data-depth-right>-- m</output><i data-depth-scale></i></div>
       <div class="rov-hud__attitude">
         <svg viewBox="0 0 240 240" aria-hidden="true">
           <defs><clipPath id="rov-hud-clip"><circle cx="120" cy="120" r="91" /></clipPath></defs>
@@ -32,11 +32,18 @@ export class RovHud extends HTMLElement {
         <output class="rov-hud__pitch" data-pitch>p: --</output>
       </div>
       <div class="rov-hud__heading"><output data-heading>---°</output><div data-heading-scale></div><b></b></div>`;
+    this.renderScales();
     const store = window.rovCockpitTelemetry;
     if (store) this.unsubscribe = store.subscribe((update) => this.consume(update));
+    document.addEventListener("rov-instrument-style", this.applyStyle as EventListener);
   }
 
-  disconnectedCallback(): void { this.unsubscribe?.(); this.unsubscribe = undefined; }
+  disconnectedCallback(): void { this.unsubscribe?.(); this.unsubscribe = undefined; document.removeEventListener("rov-instrument-style", this.applyStyle as EventListener); }
+
+  private applyStyle = (event: CustomEvent<{ target: string; style: { text: string; line: string; accent: string; lineWidth: number } }>): void => {
+    if (event.detail.target !== "rov-hud") return;
+    this.style.setProperty("--hud-text", event.detail.style.text); this.style.setProperty("--hud-line", event.detail.style.line); this.style.setProperty("--hud-accent", event.detail.style.accent); this.style.setProperty("--hud-line-width", `${event.detail.style.lineWidth}px`);
+  };
 
   private consume(update: TelemetryStateUpdate): void {
     const numeric = update.state.numeric;
@@ -53,10 +60,17 @@ export class RovHud extends HTMLElement {
     this.setText("[data-heading]", valid(heading) ? `${Math.round((heading.value + 360) % 360)}°` : "---°");
     this.setText("[data-depth-left]", valid(depth) ? `${depth.value.toFixed(2)} m` : "-- m");
     this.setText("[data-depth-right]", valid(depth) ? `${depth.value.toFixed(2)} m` : "-- m");
+    this.querySelectorAll<HTMLElement>("[data-depth-scale]").forEach((scale) => scale.style.setProperty("--depth-offset", valid(depth) ? `${Math.max(-90, Math.min(90, depth.value * -18))}px` : "0px"));
+    if (valid(heading)) this.querySelector<HTMLElement>("[data-heading-scale]")?.style.setProperty("--heading-offset", `${-((heading.value + 360) % 360) * 1.4}px`);
     this.dataset.status = rollValue === null || pitchValue === null || !valid(depth) || !valid(heading) ? "partial" : "available";
   }
 
   private setText(selector: string, value: string): void { const element = this.querySelector<HTMLElement>(selector); if (element) element.textContent = value; }
+  private renderScales(): void {
+    this.querySelectorAll<HTMLElement>("[data-depth-scale]").forEach((scale) => { scale.innerHTML = Array.from({ length: 11 }, (_, i) => `<span>${i - 5} m</span>`).join(""); });
+    const scale = this.querySelector<HTMLElement>("[data-heading-scale]");
+    if (scale) scale.innerHTML = Array.from({ length: 25 }, (_, i) => { const degree = (i * 15) % 360; const cardinal = [0, 90, 180, 270].includes(degree); return `<span class="${cardinal ? "cardinal" : ""}">${cardinal ? ["N", "E", "S", "W"][degree / 90] : `${degree}°`}</span>`; }).join("");
+  }
 }
 
 customElements.get("rov-hud") || customElements.define("rov-hud", RovHud);

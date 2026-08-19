@@ -390,10 +390,6 @@ The frontend must not contain:
 
 The TypeScript Web Component set includes:
 
-- `<rov-heading>`;
-- `<rov-attitude>`;
-- `<rov-pitch>`;
-- `<rov-camera-pitch>`;
 - `<rov-battery>`;
 - `<rov-network-status>`;
 - `<rov-depth>`;
@@ -405,23 +401,25 @@ They must not contain NATS or WebSocket transport logic.
 
 ---
 
-## 10. Attitude instrument
+## 10. Combined ROV navigation HUD
 
-The primary attitude instrument is:
+The intended ROV cockpit navigation instrument is:
 
 ```text
-<rov-attitude>
+<rov-hud>
 ```
 
 It is a native SVG/CSS virtual-horizon display.
 
-It presents:
+It presents together:
 
 - roll;
-- pitch.
+- pitch;
+- depth;
+- heading.
 
-The instrument consumes attitude values from the shared TypeScript telemetry
-state.
+The instrument consumes roll, pitch, depth, and heading values from the shared
+TypeScript telemetry state.
 
 It contains no:
 
@@ -432,25 +430,6 @@ It contains no:
 
 Invalid, unavailable, or non-numeric attitude values must be represented as
 unavailable rather than replaced with an assumed or fabricated measurement.
-
-### Separate pitch instrument
-
-The separate:
-
-```text
-<rov-pitch>
-```
-
-instrument presents pitch-only nose-up/nose-down inclination.
-
-It consumes:
-
-```text
-sensor.ahrs.imu.pitch
-```
-
-The pitch-only instrument is distinct from the primary combined roll/pitch
-attitude instrument.
 
 ### ROV HUD
 
@@ -471,6 +450,26 @@ The HUD consumes shared telemetry state and contains no transport logic.
 The HUD does not redefine the underlying attitude telemetry model.
 
 Other robot profiles may omit the ROV HUD entirely.
+
+### HUD style editing
+
+The Cockpit provides a reusable instrument-style editor for the ROV HUD. It
+currently exposes text colour, line colour, accent colour, and line thickness.
+The editor applies CSS custom properties and emits a generic browser event so
+the same framework can later style heading bars, depth bars, and other
+components. Settings are currently stored in browser local storage using the
+active profile and component identity; robot-backed profile persistence remains
+planned.
+
+### Development sensor simulator
+
+The `/simulator/` page is always visible in the Cockpit navigation. A runtime
+switch controls whether its sliders may inject fake depth, heading, pitch,
+roll, battery voltage, and battery percentage values into the browser telemetry
+path. The switch defaults to off on process start unless
+`COCKPIT_ENABLE_SIMULATOR=true` is explicitly set. Simulator values do not go
+to NATS or Control, and simulator mode must not be enabled for live physical
+robot operation.
 
 ---
 
@@ -1261,16 +1260,12 @@ pipeline defined elsewhere in this document.
 
 ### Attitude and navigation customisation
 
-The attitude instrument and ROV HUD are configurable Cockpit presentation
+The ROV HUD and other instruments are configurable Cockpit presentation
 components rather than hard-coded requirements for every robot profile.
 
 The ROV profile may provide:
 
-- `<rov-attitude>`;
-- `<rov-pitch>`;
-- `<rov-heading>`;
 - `<rov-depth>`;
-- `<rov-camera-pitch>`;
 - `<rov-hud>`.
 
 Other robot profiles may select different instruments or omit ROV-specific
@@ -1727,6 +1722,11 @@ Documentation is part of the implementation.
 
 A behavioural, interface, driver, deployment, architecture, or validation change
 must update the relevant documentation in the same change.
+
+This is a hard completion gate. A change must not be reported as complete while
+its documentation is deferred or while obsolete documentation contradicts the
+implementation. The author must record the documentation and consistency checks
+performed, or the reason they could not be run.
 
 The master context must also be updated when the change materially affects:
 

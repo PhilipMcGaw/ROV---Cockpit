@@ -1,0 +1,21 @@
+{% include "header.jinja" %}
+<main class="container py-4">
+  <h1><i class="fa-solid fa-flask"></i> Development sensor simulator</h1>
+  <p id="simulationWarning" class="alert alert-secondary">Simulation mode is off. Enable it before sending fake telemetry.</p>
+  <div class="card bg-dark-subtle p-3 mb-3"><label class="form-check form-switch"><input id="simulationEnabled" class="form-check-input" type="checkbox"><span class="form-check-label">Simulation mode</span></label><small>When enabled, slider values are injected into the Cockpit telemetry stream. The mode resets to off when Cockpit restarts unless enabled by configuration.</small></div>
+  <div class="card bg-dark-subtle p-3">
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">Depth <output data-output="depth"></output></label><input class="form-range" data-topic="sensor/water/depth" data-name="depth" type="range" min="0" max="20" step="0.01" value="0"></div>
+      <div class="col-md-6"><label class="form-label">Heading <output data-output="heading"></output></label><input class="form-range" data-topic="sensor/ahrs/imu/heading" data-name="heading" type="range" min="0" max="359" step="1" value="0"></div>
+      <div class="col-md-6"><label class="form-label">Pitch <output data-output="pitch"></output></label><input class="form-range" data-topic="sensor/ahrs/imu/pitch" data-name="pitch" type="range" min="-90" max="90" step="0.1" value="0"></div>
+      <div class="col-md-6"><label class="form-label">Roll <output data-output="roll"></output></label><input class="form-range" data-topic="sensor/ahrs/imu/roll" data-name="roll" type="range" min="-180" max="180" step="0.1" value="0"></div>
+      <div class="col-md-6"><label class="form-label">Battery voltage <output data-output="voltage"></output></label><input class="form-range" data-topic="input/analog/battery/voltage" data-name="voltage" type="range" min="0" max="30" step="0.01" value="12"></div>
+      <div class="col-md-6"><label class="form-label">Battery percentage <output data-output="battery"></output></label><input class="form-range" data-topic="input/analog/battery/percentage" data-name="battery" type="range" min="0" max="100" step="1" value="100"></div>
+    </div>
+    <button id="sendSimulation" class="btn btn-primary mt-3">Send values</button>
+    <output id="simulationStatus" class="d-block mt-2">Ready</output>
+  </div>
+</main>
+<script>
+(() => { const fields=[...document.querySelectorAll('[data-topic]')]; const toggle=document.getElementById('simulationEnabled'); const warning=document.getElementById('simulationWarning'); const status=document.getElementById('simulationStatus'); const values=()=>Object.fromEntries(fields.map(f=>[f.dataset.topic, Number(f.value)])); const refresh=()=>fields.forEach(f=>document.querySelector(`[data-output="${f.dataset.name}"]`).textContent=`${Number(f.value).toFixed(f.step.includes('.')?2:0)} ${f.dataset.name==='depth'?'m':f.dataset.name==='voltage'?'V':f.dataset.name==='battery'?'%':'°'}`); const update=enabled=>{toggle.checked=enabled; warning.className=enabled?'alert alert-danger':'alert alert-secondary'; warning.textContent=enabled?'Simulation mode is ON. Fake telemetry will be injected into the Cockpit.':'Simulation mode is off. Enable it before sending fake telemetry.';}; fetch('/api/development/simulation/state').then(r=>r.json()).then(s=>update(s.enabled)); toggle.onchange=async()=>{const r=await fetch('/api/development/simulation/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:toggle.checked})}); update((await r.json()).enabled);}; fields.forEach(f=>f.addEventListener('input',refresh)); document.getElementById('sendSimulation').onclick=async()=>{const response=await fetch('/api/development/simulation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({values:values()})}); status.textContent=response.ok?'Values sent to Cockpit telemetry':'Enable simulation mode before sending values';}; refresh(); })();
+</script>
