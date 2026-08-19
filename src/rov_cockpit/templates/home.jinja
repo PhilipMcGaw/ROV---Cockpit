@@ -1,188 +1,6 @@
-<!DOCTYPE html>
-<html lang="en_gb" data-theme="dark" dir="ltr">
-    <head>
-        <meta charset="utf8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta http-equiv="x-ua-compatible" content="ie=edge" />
-        <title>ROV</title>
-
-    <!-- Icons and webmanifest -->
-            <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
-            <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
-            <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
-            <link rel="manifest" href="/static/site.webmanifest">
-
-            <link
-                rel="stylesheet"
-                type="text/css"
-                href="/static/css/pico.css"
-            />
-
-        <!-- My CSS -->
-            <link
-                rel="stylesheet"
-                type="text/css"
-                href="/static/css/cockpit.css"
-            />
-
-        <!-- Font Awesome -->
-            <link
-                rel="stylesheet"
-                type="text/css"
-                href="/static/css/all.css"
-            />
-
-        <!-- Weather Icons -- https://erikflowers.github.io/weather-icons/ -->
-            <link
-                rel="stylesheet"
-                type="text/css"
-                href="/static/css/weather-icons.css"
-            />
-
-            <link
-                rel="stylesheet"
-                type="text/css"
-                href="/static/css/weather-icons-wind.css"
-            />
-
-
-        <!-- Google Fonts Roboto -->
-         <!--   <link
-                rel="stylesheet"
-                type="text/css"
-                href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"
-            /> -->
-
-        <!-- JQuery remains available to legacy pages; cockpit instruments use Web Components. -->
-            <script src="/static/js/jquery.js"></script>
-  </head>
-
-<body onload="menuIcons()">
-    <button class="rov-menu-toggle" type="button" aria-expanded="false" aria-controls="rov-menu-popover" aria-label="Open navigation menu"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
-    <aside class="rov-menu-popover" id="rov-menu-popover" aria-label="Cockpit navigation" hidden>
-        <div class="rov-menu-popover__title"><i class="fa-solid fa-otter" aria-hidden="true"></i><span>ROV Cockpit</span></div>
-        <a href="/" class="rov-menu-popover__item"><i class="fa-solid fa-video"></i><span>Live</span></a>
-        <a href="/files/" class="rov-menu-popover__item"><i class="fa-solid fa-film"></i><span>Files</span></a>
-        <a href="/data/" class="rov-menu-popover__item"><i class="fa-solid fa-table-list"></i><span>Raw data</span></a>
-        <a href="/map/" class="rov-menu-popover__item"><i class="fa-solid fa-map-location-dot"></i><span>Map</span></a>
-        <a href="/cameras/" class="rov-menu-popover__item"><i class="fa-solid fa-camera"></i><span>Cameras</span></a>
-        <a href="/gamepad/" class="rov-menu-popover__item"><i class="fa-solid fa-gamepad"></i><span>Gamepad</span></a>
-        <a href="/simulator/" class="rov-menu-popover__item"><i class="fa-solid fa-flask"></i><span>Sensor simulator</span></a>
-        <a href="/account/" class="rov-menu-popover__item"><i class="fa-solid fa-user-shield"></i><span>Account</span></a>
-    </aside>
-
-<!-- Start your project here-->
-
-  <!-- Navbar -->
-    <nav class="navbar" aria-label="Primary navigation">
-
-    <!-- Container wrapper -->
-    <div class="container">
-
-        <!-- Navbar brand -->
-        <a class="navbar-brand mt-2 mt-lg-0" href="#">
-            <i class="fa-solid fa-otter fa-lg"></i>&nbsp;ROV
-            <!-- <i class="fa-solid fa-paw fa-lg"></i>&nbsp;K9 -->
-        </a>
-
-        <!-- Right elements -->
-
-        <!-- Icons -->
-        <ul class="navbar-nav d-flex flex-row me-1">
-
-            <!-- Battery Level -->
-            <!-- NATS system/state-of-charge -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link"><span data-vue-instrument="battery"></span></a>
-            </li>
-
-            <!-- NATS battery/voltage -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" id="batteryVoltage">Voltage</a>
-            </li>
-            <!-- End Battery Level -->
-
-            <!-- seperater -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link">|</a>
-            </li>
-
-            <!-- NATS water/temperature -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" id="temperature"><i class="fa-solid fa-temperature-half"></i>&nbsp;Temperature</a>
-            </li>
-
-            <!-- seperater -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link">|</a>
-            </li>
-
-            <!-- NATS System/Uptime -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" id="upTime">Uptime</a>
-            </li>
-
-            <!-- seperater -->
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link">|</a>
-            </li>
-
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" href="/"><i class="fa-solid fa-video fa-lg"></i>&nbsp;Live</a>
-            </li>
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" href="/files/"><i class="fa-solid fa-film fa-lg"></i>&nbsp;Files</a>
-            </li>
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" href="/files/"><i class="fa-solid fa-table-list"></i>&nbsp;Raw Data</a>
-            </li>
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" href="/files/"><i class="fa-solid fa-traffic-light"></i>&nbsp;Annunciator</a>
-            </li>
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" href="/map/"><i class="fa-solid fa-map-location-dot"></i>&nbsp;Map</a>
-            </li>
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" href="/simulator/"><i class="fa-solid fa-flask"></i>&nbsp;Simulator</a>
-            </li>
-            <li class="nav-item me-3 me-lg-0">
-                <a class="nav-link" id="sessionLink" href="/login"><i class="fa-solid fa-right-to-bracket"></i>&nbsp;Login</a>
-            </li>
-
-        </ul>
-        <!-- Right elements -->
-    </div>
-    <!-- Container wrapper -->
-  </nav>
-<!-- Navbar End-->
-
-    <script>
-        (() => {
-            const toggle = document.querySelector('.rov-menu-toggle');
-            const panel = document.getElementById('rov-menu-popover');
-            if (!toggle || !panel) return;
-            const setOpen = (open) => {
-                toggle.setAttribute('aria-expanded', String(open));
-                toggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
-                panel.hidden = !open;
-                document.body.classList.toggle('rov-menu-open', open);
-            };
-            toggle.addEventListener('click', () => setOpen(panel.hidden));
-            document.addEventListener('click', (event) => {
-                if (!panel.hidden && !panel.contains(event.target) && event.target !== toggle && !toggle.contains(event.target)) setOpen(false);
-            });
-            document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setOpen(false); });
-        })();
-        fetch('/api/session', {cache: 'no-store', credentials: 'same-origin'}).then(response => response.json()).then(session => {
-            const link = document.getElementById('sessionLink');
-            if (!link || !session.authenticated) return;
-            link.href = '/logout';
-            link.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i>&nbsp;${session.username}`;
-            link.title = 'Log out';
-        }).catch(() => {});
-    </script>
-
-
+{% extends "base.jinja" %}
+{% block title %}home — ROV{% endblock %}
+{% block content %}
 <!-- Main area -->
 
     <!-- Main Camera feed! -->
@@ -217,13 +35,34 @@
     </style>
 
     <!-- The TypeScript build emits ES modules; map Vue to the committed runtime vendor asset. -->
-    <script type="importmap">
-        {"imports":{"vue":"/static/dist/vendor/vue.runtime.esm-browser.prod.js"}}
-    </script>
-    <script type="module" src="/static/dist/main.js"></script>
-    <script type="module" src="/static/dist/components/rov-depth.js"></script>
+    
+    
+    
 
-    <script>
+    
+
+    
+
+<!--
+    <div  class="bg-image vh-100"
+        style="margin-top: -60px;
+        background-image: url('/static/bridge.jpg');">
+    </div>
+-->
+
+    <rov-hud id="rov-hud" aria-label="ROV navigation HUD"></rov-hud>
+    <rov-instrument-style-editor target="rov-hud" profile="rov"></rov-instrument-style-editor>
+
+    <!-- End your project here-->
+
+        <!-- Custom scripts -->
+
+        
+    </body>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/dist/components/rov-depth.js"></script>
+<script>
         (() => {
             const download = document.getElementById('downloadRate');
             const upload = document.getElementById('uploadRate');
@@ -254,8 +93,7 @@
             measure().catch(() => {});
         })();
     </script>
-
-    <script>
+<script>
         (() => {
             const camera = document.getElementById('mainCamera');
             const liveSource = '/cam1';
@@ -285,25 +123,8 @@
             window.setTimeout(checkCamera, retryDelayMs);
         })();
     </script>
-
-<!--
-    <div  class="bg-image vh-100"
-        style="margin-top: -60px;
-        background-image: url('/static/bridge.jpg');">
-    </div>
--->
-
-    <rov-hud id="rov-hud" aria-label="ROV navigation HUD"></rov-hud>
-    <rov-instrument-style-editor target="rov-hud" profile="rov"></rov-instrument-style-editor>
-
-    <!-- End your project here-->
-
-        <!-- Custom scripts -->
-
-        <script type="text/javascript">
+<script type="text/javascript">
             const uptimeElement = document.getElementById("upTime");        // Uptime
-            const voltElement = document.getElementById("batteryVoltage");  // Battery Voltage
-            const socElement = document.getElementById("batteryLevel");     // State of Charge
             const tempElement = document.getElementById("temperature");     // Water Temperature
             const depthElement = document.getElementById("depth");          // Depth (this is a positive number…)
 
@@ -311,39 +132,6 @@
                 if (topic === "system/uptime") {
                     if (uptimeElement) {
                         uptimeElement.innerHTML = "<i class=\"fa-solid fa-hourglass-half\"></i> " + message.toString();
-                    }
-                }
-
-                if (topic === "input/analog/battery/voltage") {
-                    if (voltElement) {
-                        voltElement.innerHTML = message.toString() + " V";
-                    }
-                }
-
-                if (topic === "input/analog/battery/percentage") {
-                    if (socElement) {
-                        batteryLevel = message.toString() * 10;
-                        // less than 20 %
-                        if (batteryLevel < 20) {
-                            batteryIcon = "fa-battery-empty text-danger";
-                        }
-                        // less than 40 %
-                        else if (batteryLevel < 40) {
-                            batteryIcon = "fa-battery-quarter text-warning";
-                        }
-                        // less than 60 %
-                        else if (batteryLevel < 60) {
-                            batteryIcon = "fa-battery-half";
-                        }
-                        // less than 80
-                        else if (batteryLevel < 80) {
-                            batteryIcon = "fa-battery-three-quarters";
-                        }
-                        // All other values
-                        else {
-                            batteryIcon = "fa-battery-full text-success";
-                        }
-                        document.getElementById('batteryLevel').innerHTML =  "<i class=\"fas " + batteryIcon + " fa-lg\"></i>";
                     }
                 }
 
@@ -378,5 +166,4 @@
 
             connectTelemetry();
         </script>
-    </body>
-</html>
+{% endblock %}

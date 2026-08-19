@@ -1,4 +1,7 @@
-{% include "header.jinja" %}
+{% extends "base.jinja" %}
+{% block title %}gamepad — ROV{% endblock %}
+{% block content %}
+
 
 <main class="container py-4">
   <h1><i class="fa-solid fa-gamepad"></i> Gamepad customisation</h1>
@@ -28,7 +31,8 @@
     <pre id="gamepadAxes" class="mb-0">Move a control to see its value.</pre>
   </div>
 </main>
-
+{% endblock %}
+{% block scripts %}
 <script>
 (() => {
   const defaults = {throttleAxis: '1', steeringAxis: '0', verticalAxis: '3', cameraPanAxis: '2', deadZone: '0.12', sensitivity: '0.75', armButton: '0', deadmanButton: '4'};
@@ -58,3 +62,7 @@
   poll();
 })();
 </script>
+{% endblock %}
+
+
+

@@ -1,4 +1,7 @@
-{% include "header.jinja" %}
+{% extends "base.jinja" %}
+{% block title %}cameras — ROV{% endblock %}
+{% block content %}
+
 
 <main class="container py-4">
   <h1>Camera configuration</h1>
@@ -26,7 +29,8 @@
     {% endfor %}
   </div>
 </main>
-
+{% endblock %}
+{% block scripts %}
 <script>
   for (const form of document.querySelectorAll('.camera-form')) {
     form.addEventListener('submit', async (event) => {
@@ -49,3 +53,7 @@
     });
   }
 </script>
+{% endblock %}
+
+
+

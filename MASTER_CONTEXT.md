@@ -2190,3 +2190,9 @@ The key architectural principles are:
 Battery state-of-charge telemetry is a numeric percentage in the inclusive
 `0–100` range. Legacy `0–10` values may be accepted temporarily by Cockpit,
 but must not be used by new publishers or simulator controls.
+All Cockpit HTML pages use the shared `templates/base.jinja` shell and
+`templates/header.jinja` navigation. Page-specific templates must not recreate
+the document head or primary navigation; they provide content and scoped
+scripts through Jinja blocks.
+The shared header does not show temperature, heading, depth, or uptime; these
+remain in the appropriate live HUD and telemetry/data views.

@@ -106,6 +106,7 @@ The main Cockpit page includes a reusable `rov-instrument-style-editor` for the 
 
 The `/simulator/` page is always available from the main navigation. Its runtime switch is off by default unless `COCKPIT_ENABLE_SIMULATOR=true` is set. When enabled, slider changes automatically send depth, heading, pitch, roll, battery voltage, and battery percentage values into the Cockpit browser telemetry path; no send button is required. Simulation injection broadcasts each submitted topic directly to connected WebSocket clients before the request completes, so the HUD and status instruments update together. The simulator does not publish to NATS or Control and must not be enabled during live physical robot operation.
 Secondary pages use neutral `--` status placeholders in the shared header; live telemetry presentation belongs to the Live Cockpit page and the combined ROV HUD.
+The shared header intentionally does not display temperature, heading, depth, or uptime. Battery percentage and voltage are shared Vue instruments and work on every page; heading and depth belong in the combined live HUD; temperature and uptime remain available through the telemetry/data views.
 
 ## Camera media
 
@@ -121,4 +122,5 @@ The Browser Gamepad API works with standard HID controllers on Windows and macOS
 
 Use `localhost` or `127.0.0.1` for local development. A deployed Cockpit should use HTTPS. Settings on `/gamepad/` are stored in the browser and can be adjusted without changing Python code. Test with propulsion disabled until the control mapping, arm button, dead-man button, neutral-on-disconnect behavior, and timeout handling have been verified.
 Vue status instruments require `window.rovCockpitTelemetry` to be assigned before their mount lifecycle runs; the frontend bootstrap preserves that ordering so migrated instruments receive the initial telemetry snapshot.
-Battery state-of-charge telemetry shall be numeric percent in the inclusive `0–100` range. The Vue battery instrument currently accepts legacy `0–10` values temporarily for compatibility, but the simulator and all new publishers shall use `0–100`.
+Battery state-of-charge telemetry shall be numeric percent in the inclusive `0–100` range. The shared header mounts the Vue battery instrument; the old inline battery renderer is removed so it cannot reintroduce the legacy `0–10` conversion. The Vue instrument still accepts legacy `0–10` values temporarily for compatibility, but the simulator and all new publishers shall use `0–100`.
+All HTML pages extend `templates/base.jinja`. The base template owns the document shell, shared styles, Vue import map, cache-busted frontend bootstrap, and `header.jinja` navigation; page templates provide only their content and page-specific scripts. This ensures shared Vue instruments such as battery status and voltage mount on every page and prevents navigation/layout divergence.

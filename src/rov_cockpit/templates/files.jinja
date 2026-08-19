@@ -1,4 +1,7 @@
-{% include "header.jinja" %}
+{% extends "base.jinja" %}
+{% block title %}files — ROV{% endblock %}
+{% block content %}
+
 
 <main class="container py-4">
   <h1><i class="fa-solid fa-photo-film"></i> Media</h1>
@@ -41,7 +44,8 @@
     </div>
   </section>
 </main>
-
+{% endblock %}
+{% block scripts %}
 <script>
 for (const button of document.querySelectorAll('.capture-still')) {
   button.addEventListener('click', async () => {
@@ -60,7 +64,6 @@ for (const button of document.querySelectorAll('.capture-still')) {
   });
 }
 </script>
-
 <script>
 document.getElementById('saveRecordingSettings').addEventListener('click', async () => {
   const input = document.getElementById('recordingMinutes');
@@ -70,3 +73,7 @@ document.getElementById('saveRecordingSettings').addEventListener('click', async
   message.textContent = response.ok ? 'Recording length saved. Restart Motion to apply it.' : 'Could not save recording length.';
 });
 </script>
+{% endblock %}
+
+
+

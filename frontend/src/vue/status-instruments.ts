@@ -18,4 +18,5 @@ export const RovBatteryVue = statusInstrument("fa-battery-half", "Battery", TOPI
   const percentage = raw <= 1 ? raw * 100 : raw <= 10 ? raw * 10 : raw;
   return `${Math.max(0, Math.min(100, Math.round(percentage)))} %`;
 });
+export const RovVoltageVue = statusInstrument("fa-bolt", "Voltage", TOPICS.voltage, value => value !== null && Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)} V` : "-- V");
 export const mountVueStatusInstrument = (target: Element, component: ReturnType<typeof defineComponent>): (() => void) => { const app = createApp(component); app.mount(target); return () => app.unmount(); };

@@ -1,4 +1,7 @@
-{% include "header.jinja" %}
+{% extends "base.jinja" %}
+{% block title %}map — ROV{% endblock %}
+{% block content %}
+
 <title>ROV Map</title>
     <link rel="stylesheet" href="/static/css/leaflet.css" />
     <style>
@@ -6,9 +9,10 @@
         #map { height: calc(100vh - 60px); width: 100%; }
     </style>
     <div id="map"></div>
-
-    <script src="/static/js/leaflet.js"></script>
-    <script>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/leaflet.js"></script>
+<script>
         // Initialize map (change coords/zoom as needed)
         const map = L.map('map').setView([52.16900980550594, -1.2140212752292743], 19); // 19 is the max zoom for OSM.
 
@@ -36,3 +40,7 @@
             { collapsed: false }
         ).addTo(map);
     </script>
+{% endblock %}
+
+
+

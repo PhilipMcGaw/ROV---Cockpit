@@ -1,4 +1,7 @@
-{% include "header.jinja" %}
+{% extends "base.jinja" %}
+{% block title %}account — ROV{% endblock %}
+{% block content %}
+
 <main class="container py-5" style="max-width: 720px">
   <h1><i class="fa-solid fa-user-shield"></i> Account settings</h1>
   <p class="text-muted">Signed in as <strong>{{ user.user }}</strong> ({{ user.role }}).</p>
@@ -15,3 +18,10 @@
     {% endfor %}
   </div>
 </main>
+{% endblock %}
+{% block scripts %}
+
+{% endblock %}
+
+
+

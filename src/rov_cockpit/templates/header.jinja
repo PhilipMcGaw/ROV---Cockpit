@@ -21,47 +21,18 @@
               <!-- Battery Level -->
               <!-- NATS system/state-of-charge -->
               <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="batteryLevel"><i class="fa-solid fa-battery-half" aria-hidden="true"></i>&nbsp;Battery --</a>
+                  <a class="nav-link" id="batteryLevel"><span data-vue-instrument="battery"></span></a>
               </li>
 
               <!-- NATS battery/voltage -->
               <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="batteryVoltage">Voltage --</a>
+                  <a class="nav-link" id="batteryVoltage"><span data-vue-instrument="voltage"></span></a>
               </li>
               <!-- End Battery Level -->
 
               <!-- seperater -->
               <li class="nav-item me-3 me-lg-0">
                   <a class="nav-link">|</a>
-              </li>
-
-              <!-- NATS water/temperature -->
-              <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="temperature">Temperature --</a>
-              </li>
-
-              <!-- seperater -->
-              <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link">|</a>
-              </li>
-
-              <!-- NATS direction/depth -->
-              <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="compass">Heading --</a>
-              </li>
-
-              <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="depth">Depth --</a>
-              </li>
-
-              <!-- seperater -->
-              <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link">|</a>
-              </li>
-
-              <!-- NATS system/uptime -->
-              <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="upTime">Uptime --</a>
               </li>
 
               <!-- seperater -->
@@ -110,4 +81,3 @@ fetch('/api/session', {cache:'no-store', credentials:'same-origin'}).then(r=>r.j
   link.href='/logout'; link.innerHTML='<i class="fa-solid fa-right-from-bracket"></i>&nbsp;'+session.username; link.title='Log out';
 }).catch(() => {});
 </script>
-

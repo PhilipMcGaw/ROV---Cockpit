@@ -2,7 +2,7 @@ import { TelemetryStore } from "./telemetry/store.js";
 import { TelemetryWebSocket } from "./transport/telemetry-websocket.js";
 import "./components/instruments/rov-hud.js";
 import "./components/instrument-style-editor.js";
-import { mountVueStatusInstrument, RovBatteryVue } from "./vue/status-instruments.js";
+import { mountVueStatusInstrument, RovBatteryVue, RovVoltageVue } from "./vue/status-instruments.js";
 export const cockpitTelemetryStore = new TelemetryStore();
 export const cockpitTelemetrySocket = new TelemetryWebSocket(cockpitTelemetryStore);
 // Publish the store before Vue instruments mount so they can subscribe during setup.
@@ -11,8 +11,11 @@ window.rovCockpitTelemetry = cockpitTelemetryStore;
 // inline instruments continue to use their current router until they are migrated.
 const mountVueInstruments = () => {
     const battery = document.querySelector("[data-vue-instrument='battery']");
+    const voltage = document.querySelector("[data-vue-instrument='voltage']");
     if (battery)
         mountVueStatusInstrument(battery, RovBatteryVue);
+    if (voltage)
+        mountVueStatusInstrument(voltage, RovVoltageVue);
 };
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => { cockpitTelemetrySocket.start(); mountVueInstruments(); }, { once: true });

@@ -1,4 +1,7 @@
-{% include "header.jinja" %}
+{% extends "base.jinja" %}
+{% block title %}simulator — ROV{% endblock %}
+{% block content %}
+
 <main class="container py-4">
   <h1><i class="fa-solid fa-flask"></i> Development sensor simulator</h1>
   <p id="simulationWarning" class="alert alert-secondary">Simulation mode is off. Enable it before sending fake telemetry.</p>
@@ -15,6 +18,12 @@
     <output id="simulationStatus" class="d-block mt-3">Move a slider to send live telemetry.</output>
   </div>
 </main>
+{% endblock %}
+{% block scripts %}
 <script>
 (() => { const fields=[...document.querySelectorAll('[data-topic]')]; const toggle=document.getElementById('simulationEnabled'); const warning=document.getElementById('simulationWarning'); const status=document.getElementById('simulationStatus'); let enabled=false; let timer; const values=()=>Object.fromEntries(fields.map(f=>[f.dataset.topic, Number(f.value)])); const refresh=()=>fields.forEach(f=>document.querySelector(`[data-output="${f.dataset.name}"]`).textContent=`${Number(f.value).toFixed(f.step.includes('.')?2:0)} ${f.dataset.name==='depth'?'m':f.dataset.name==='voltage'?'V':f.dataset.name==='battery'?'%':'°'}`); const update=state=>{enabled=state; toggle.checked=state; warning.className=state?'alert alert-danger':'alert alert-secondary'; warning.textContent=state?'Simulation mode is ON. Slider changes are sent live to the Cockpit.':'Simulation mode is off. Enable it before moving sliders.';}; const send=()=>{if(!enabled)return; clearTimeout(timer); timer=setTimeout(async()=>{const response=await fetch('/api/development/simulation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({values:values()})}); status.textContent=response.ok?'Live telemetry updated':'Enable simulation mode before sending fake telemetry';},40);}; fetch('/api/development/simulation/state').then(r=>r.json()).then(s=>update(s.enabled)); toggle.onchange=async()=>{const r=await fetch('/api/development/simulation/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:toggle.checked})}); update((await r.json()).enabled); if(enabled)send();}; fields.forEach(f=>f.addEventListener('input',()=>{refresh();send();})); refresh(); })();
 </script>
+{% endblock %}
+
+
+
