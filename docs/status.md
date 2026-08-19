@@ -11,16 +11,18 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - TypeScript state, topic mapping, parsing, and reconnecting WebSocket adapter.
 - Independent `<rov-depth>` Web Component consuming shared cockpit state.
 - Vue-rendered battery status instrument consuming shared cockpit state.
-- Shared translucent operator shell on every page: compact status bar, browser-WebSocket link indicator, local clock, and a hamburger-triggered navigation popover.
+- Shared translucent operator shell on every page: compact status bar, browser-WebSocket link indicator, 24-hour local clock with a 1 Hz flashing colon, and a hamburger-triggered navigation popover.
+- Collapsible left-hand live-view diagnostics tray. It currently holds the read-only estimated browser-to-Cockpit network transfer rate and leaves the primary flight display uncluttered.
 - Vue-rendered live-view bottom dock presenting the selected camera and live depth, heading, roll, pitch, primary-light percentage, camera tilt, and water temperature without sending control commands.
 - The HUD depth scale retains only its graduations and centre read-off line; live numeric depth is presented once in the bottom dock.
 - Battery-percentage contract enforced as numeric `0–100` percent; legacy `0–10` and `0–1` scaling is not supported.
 - Independent `<rov-network-status>` and `<rov-depth>` Web Components consuming shared cockpit state until their Vue ports are completed.
 - ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay. This is the intended navigation instrument for the ROV cockpit.
 - The former standalone heading band and depth meter have been removed; heading and depth are rendered only within the combined HUD.
-- The HUD presentation has been rebuilt toward the reference design: transparent central attitude arcs, side roll scales, a right-side depth scale, and a bottom heading tape. Heading marks are projected relative to the live heading in 3-degree increments, with major/cardinal labels and a fixed centre pointer.
+- The HUD presentation has been rebuilt toward the reference design: transparent central attitude arcs, side roll scales, a right-side depth scale, and a bottom heading tape. Heading marks are projected relative to the live heading in 3-degree increments: North/0° uses the largest tick, all other 15-degree divisions use an intermediate tick, and the remaining divisions use minor ticks, with a fixed centre pointer.
 - Reusable HUD style editor with live colour and line-thickness controls; settings currently persist in browser local storage.
 - Development sensor simulator page with runtime enable/disable control and slider-driven browser telemetry injection.
+- Profile-driven browser-assisted time relay: an authenticated driver/admin page publishes UTC Unix milliseconds to the active profile's Cockpit NATS subject on load and every 60 seconds; Control remains the sole service permitted to alter the RPi clock.
 - Existing instruments, camera handling, media capture/download, CSV access, authentication, and Gamepad API support remain part of the application.
 
 ## Automated-test verification
@@ -41,6 +43,7 @@ The current repository state is not recorded as bench-tested or production-valid
 - CSS Grid, Pico.css, Vue component migration, and complete TypeScript frontend migration.
 - Reproducible TypeScript generation in every supported development environment.
 - Complete production authentication and authorisation hardening.
+- Raspberry Pi bench validation of browser-assisted clock synchronisation, including the deployed `CAP_SYS_TIME` systemd capability and NATS status result.
 
 ## Important references
 

@@ -53,6 +53,14 @@ Only after the dry test passes: inspect seals and penetrators, perform a tethere
 ## Current limitations
 
 The repository does not currently contain a comprehensive automated test suite. Existing files named `test*` are historical/integration experiments, not a reliable acceptance suite.
+
+## Browser-assisted time synchronisation test
+
+Perform this only on a development RPi with propulsion disabled. Install the active profile and updated Control unit, then run `sudo systemctl daemon-reload` and restart Control. Sign in to Cockpit as a driver or administrator and open a page. Confirm a message on `<namespace>.cockpit.command.system.time-sync`, then inspect `<namespace>.control.status.system.time-sync` and `journalctl -u rov-control` (or the deployed Control unit name). Check `date --iso-8601=seconds` before and after only when it is safe to alter the development clock. Do not use a browser-supplied time source as production evidence of time accuracy; compare it with a trusted time source and record the result.
+
+## Live diagnostics tray test
+
+Open the live Cockpit page and use the left-edge diagnostics tab. Confirm that the tray expands between the top status bar and lower dock, displays estimated browser-to-Cockpit upload and download rates, and closes using its close control. The rate is diagnostic-only: it must not claim robot network health, alter Control behaviour, or overlap the primary HUD or command dock.
 # Documentation currency audit
 
 Run `python tests/test_documentation.py` before submitting changes. The check is intentionally independent of application dependencies so that documentation drift can be detected on a clean or locked-down workstation. CI runs the same command.

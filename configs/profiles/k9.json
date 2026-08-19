@@ -5,6 +5,13 @@
   "profile_status": "functional-example",
   "namespace": "k9",
   "transport": { "nats_subject_prefix": "k9." },
+  "time_synchronisation": {
+    "enabled": true,
+    "command_subject": "k9.cockpit.command.system.time-sync",
+    "status_subject": "k9.control.status.system.time-sync",
+    "interval_seconds": 60,
+    "minimum_adjustment_seconds": 0.5
+  },
   "capabilities": {
     "battery": true,
     "heading": false,

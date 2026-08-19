@@ -487,14 +487,18 @@ robot operation.
 
 ### Heading
 
-The heading strip is an independent overlay positioned below the top navigation
-bar.
+The ROV combined HUD owns the heading presentation. Its heading tape is a
+transparent video overlay positioned along the lower edge of the live view,
+above the command dock.
 
-It remains visually separated from the navigation bar when the bar is resized.
+It uses 3-degree minor ticks. The North/0-degree tick is the longest and
+heaviest; all other 15-degree divisions use intermediate major ticks. Cardinal
+points retain their compass labels but do not alter their tick length.
 
 ### Depth
 
-The active depth presentation uses a left-side vertical depth/altitude strip.
+The active depth presentation is the right-side vertical depth scale in the
+combined ROV HUD.
 
 It uses:
 
@@ -502,7 +506,7 @@ It uses:
 sensor/water/depth
 ```
 
-with the required decimetre-to-metre conversion.
+with SI metres as the telemetry and display unit.
 
 Invalid or unavailable depth must be represented explicitly.
 
@@ -2212,6 +2216,16 @@ The key architectural principles are:
 
 > **Safety must remain effective when Cockpit, the browser, WebSocket, or NATS
 > connection fails.**
+
+## Live diagnostics tray
+
+The live view has a reusable left-hand diagnostics tray. It remains collapsed to a small tab by default and expands only within the space between the status bar and bottom dock. The initial item is the estimated browser-to-Cockpit upload/download rate; it is a read-only browser diagnostic, not robot Wi-Fi, Internet, NATS, or Control-health telemetry. Future diagnostic widgets may populate the tray without changing the primary HUD or receiving control authority.
+
+## Browser-assisted system time synchronisation
+
+An RPi without an RTC may start with an invalid clock. When the active robot profile enables `time_synchronisation`, an authenticated Cockpit `driver` or `admin` browser sends its UTC Unix time in milliseconds to Cockpit on page load and then every 60 seconds. Cockpit validates the active profile and relays the message over `<namespace>.cockpit.command.system.time-sync`; the browser never connects to NATS and neither Cockpit nor browser sets the host clock directly.
+
+Control loads the same profile at boot, accepts only the matching profile/subject/`ms` payload within the documented UTC date range, and uses Linux `time.clock_settime` only when its clock differs by at least the profile threshold. Its systemd unit receives the narrowly scoped `CAP_SYS_TIME` capability and reports `adjusted` or `within-tolerance` through `<namespace>.control.status.system.time-sync`. The mechanism is an offline bootstrap aid, not a replacement for trusted NTP, and remains unbench-tested on Raspberry Pi hardware.
 ## Battery telemetry contract
 
 Battery state-of-charge telemetry is a numeric percentage in the inclusive
@@ -2222,8 +2236,8 @@ the document head or primary navigation; they provide content and scoped
 scripts through Jinja blocks.
 The shared header is a compact translucent operator shell: it contains the ROV
 identity, a status/alert surface, battery percentage, voltage, a browser-local
-clock, and a `Link` indicator for the Cockpit browser WebSocket. Navigation is
-provided through its hamburger-triggered translucent popover. `Link` is not a
+24-hour clock with a 1 Hz flashing colon, and a `Link` indicator for the Cockpit browser WebSocket. Navigation is
+provided through its hamburger-triggered translucent popover. The hamburger button remains geometrically centred while its three-bar glyph has a small independent downward optical adjustment to align it with the otter/ROV identity lock-up without changing the hit area. `Link` is not a
 claim of NATS broker health. The shared header does not show temperature,
 heading, depth, or uptime; these remain in the appropriate live HUD and
 telemetry/data views.
@@ -2234,5 +2248,6 @@ profile-defined controls may occupy the dock only after they have an authorised
 Cockpit-to-Control command contract; the dock must never become an implicit
 owner of arming, actuator, or safety behaviour.
 The HUD heading tape centres the current heading beneath its amber marker and
-centres each tick before applying its relative bearing offset, keeping labels
-readable while the heading changes.
+centres each tick before applying its relative bearing offset. Its 3-degree
+minor ticks, intermediate 15-degree ticks, and the largest North/0-degree tick
+share that coordinate system, keeping labels readable while the heading changes.

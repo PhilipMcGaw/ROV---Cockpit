@@ -18,6 +18,8 @@ At present, robot profiles shall live in the Cockpit repository under `configs/p
 
 On the Raspberry Pi, the active profile shall be installed at a shared deployment path, initially `/etc/robot/profile.json`. Cockpit, Control, and Datalogger shall all read this same file at boot.
 
+Profiles may enable browser-assisted clock synchronisation for Raspberry Pi hardware without an RTC. The `time_synchronisation` object defines the namespaced Cockpit command subject, Control status subject, synchronisation interval, and minimum adjustment threshold. The browser sends UTC Unix time in milliseconds only through Cockpit; it never connects directly to NATS or changes the system clock. Control validates the active profile identity and owns the actual Linux clock adjustment.
+
 The profile may define the robot hostname and unique fallback network identity. The current fallback network convention is `192.168.42.0/24`; fallback addresses must remain unique when multiple robots share a wired network.
 
 Each profile shall define one default camera and support any number of additional cameras. Camera device paths and stream endpoints shall be configuration data, not hard-coded application assumptions.
@@ -31,6 +33,8 @@ Camera sources shall pass through an extensible processing pipeline before reach
 Every robot shall have a distinct namespace, such as `rov`, `k9`, or `piwars`. Command and telemetry subjects shall be distinct and shall be defined by the profile. Profile validation shall reject duplicate or ambiguous mappings.
 
 The framework NATS subject convention is dot-separated `<robot-namespace>.<service>.<message-type>.<function>`. Structured commands and telemetry use JSON payloads; NATS transport payloads remain arbitrary bytes for explicitly documented binary subjects.
+
+The standard time-synchronisation subjects are `<namespace>.cockpit.command.system.time-sync` and `<namespace>.control.status.system.time-sync`. The command payload uses `value` as UTC Unix time in `ms`, includes `profile`, and is emitted once on an authenticated driver/admin page load and then every 60 seconds. Control may report `adjusted` or `within-tolerance` status; this is observability, not an acknowledgement required by Cockpit.
 
 The Cockpit may map operator inputs to logical robot commands. It shall not map logical commands to individual motors, thrusters, or physical actuator channels. The Controller owns motor direction, mixing, inversion, limits, ramps, neutral behaviour, timeouts, emergency stop, and all hardware mappings.
 

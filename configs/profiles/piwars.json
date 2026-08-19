@@ -5,6 +5,13 @@
   "profile_status": "functional-example",
   "namespace": "piwars",
   "transport": { "nats_subject_prefix": "piwars." },
+  "time_synchronisation": {
+    "enabled": true,
+    "command_subject": "piwars.cockpit.command.system.time-sync",
+    "status_subject": "piwars.control.status.system.time-sync",
+    "interval_seconds": 60,
+    "minimum_adjustment_seconds": 0.5
+  },
   "capabilities": {
     "battery": true,
     "heading": false,

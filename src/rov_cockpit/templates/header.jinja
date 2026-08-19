@@ -15,7 +15,7 @@
     <span data-vue-instrument="connection"></span>
     <span data-vue-instrument="battery"></span>
     <span data-vue-instrument="voltage"></span>
-    <time class="rov-status-bar__clock" data-cockpit-clock aria-label="Local time"></time>
+    <time class="rov-status-bar__clock" data-cockpit-clock aria-label="Local time"><span data-cockpit-clock-hours>--</span><span class="rov-status-bar__clock-colon" aria-hidden="true">:</span><span data-cockpit-clock-minutes>--</span></time>
   </div>
 
   <nav class="rov-menu-popover" id="rov-navigation" hidden aria-label="Primary navigation">
@@ -60,8 +60,13 @@
     }
 
     const clock = document.querySelector('[data-cockpit-clock]');
+    const clockHours = document.querySelector('[data-cockpit-clock-hours]');
+    const clockMinutes = document.querySelector('[data-cockpit-clock-minutes]');
     const updateClock = () => {
-      if (clock) clock.textContent = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date());
+      const now = new Date();
+      if (clockHours) clockHours.textContent = String(now.getHours()).padStart(2, '0');
+      if (clockMinutes) clockMinutes.textContent = String(now.getMinutes()).padStart(2, '0');
+      if (clock) clock.dateTime = now.toISOString();
     };
     updateClock();
     window.setInterval(updateClock, 1000);
@@ -69,7 +74,23 @@
 
   fetch('/api/session', {cache:'no-store', credentials:'same-origin'}).then(r=>r.json()).then(session => {
     const link=document.getElementById('sessionLink');
-    if (!link || !session.authenticated) return;
-    link.href='/logout'; link.innerHTML='<i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> '+session.username; link.title='Log out';
+    if (link && session.authenticated) {
+      link.href='/logout'; link.innerHTML='<i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> '+session.username; link.title='Log out';
+    }
+    if (!session.authenticated || !['driver', 'admin'].includes(session.role)) return;
+    const synchroniseBrowserTime = async () => {
+      const response = await fetch('/api/system/time-sync', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'same-origin',
+        body: JSON.stringify({unix_time_ms: Date.now()}),
+      });
+      if (!response.ok) return 60;
+      const result = await response.json();
+      return Number.isFinite(result.interval_seconds) ? result.interval_seconds : 60;
+    };
+    synchroniseBrowserTime().then(intervalSeconds => {
+      window.setInterval(() => { synchroniseBrowserTime().catch(() => {}); }, intervalSeconds * 1_000);
+    }).catch(() => {});
   }).catch(() => {});
 </script>

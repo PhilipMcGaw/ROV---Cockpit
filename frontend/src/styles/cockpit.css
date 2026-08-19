@@ -64,7 +64,8 @@ body.rov-menu-open::after { content: ""; position: fixed; z-index: 38; inset: 0;
 .rov-hud__heading [data-heading-scale] { position:relative; display:block; height:2.65rem; overflow:hidden; white-space:nowrap; }
 .rov-hud__heading [data-heading-scale] span { position:absolute; left:50%; min-width:2.4rem; color:var(--hud-text); text-shadow:0 1px 3px rgba(0,0,0,.9); transform-origin:center; transition:transform .12s linear,opacity .12s linear; }
 .rov-hud__heading [data-heading-scale] span i { display:block; height:.45rem; border-left:1px solid var(--hud-line); margin:0 auto .15rem; }
-.rov-hud__heading [data-heading-scale] span.cardinal i { height:.75rem; border-left-width:2px; }
+.rov-hud__heading [data-heading-scale] span.major i { height:.62rem; }
+.rov-hud__heading [data-heading-scale] span.north i { height:.75rem; border-left-width:2px; }
 .rov-hud__attitude > .rov-hud__roll, .rov-hud__attitude > .rov-hud__pitch { position:absolute; left:50%; transform:translateX(-50%); color:var(--hud-text); font-weight:700; white-space:nowrap; z-index:1; }
 .rov-hud__attitude > .rov-hud__roll { top:16%; }
 .rov-hud__attitude > .rov-hud__pitch { bottom:16%; }
@@ -110,20 +111,29 @@ body:not(.rov-live-page) main { margin-top: var(--rov-topbar-height); }
 .rov-menu-toggle {
   position: static;
   z-index: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
+  padding: 0;
   border: 1px solid transparent;
   border-radius: .6rem;
   color: inherit;
   background: transparent;
   box-shadow: none;
   font-size: 1.35rem;
+  line-height: 1;
+  transform: translateY(.08rem);
 }
 .rov-menu-toggle:hover, .rov-menu-toggle:focus-visible { border-color: var(--rov-shell-border); background: rgba(255, 255, 255, .1); outline: none; }
 .rov-status-bar__identity { display: inline-flex; align-items: center; gap: .55rem; color: inherit; font-size: 1.18rem; font-weight: 700; letter-spacing: .02em; text-decoration: none; }
 .rov-status-bar__alert { justify-self: center; width: min(100%, 34rem); margin: 0; padding: .45rem .85rem; overflow: hidden; border-radius: .45rem; color: var(--rov-shell-text); background: rgba(5, 13, 26, .58); font-size: .9rem; font-weight: 650; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .rov-status-bar__system { display: flex; align-items: center; justify-content: flex-end; gap: clamp(.55rem, 1vw, 1rem); font-size: .83rem; }
-.rov-status-bar__clock { color: var(--rov-shell-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rov-status-bar__clock { display: inline-flex; align-items: baseline; color: var(--rov-shell-muted); font-family: inherit; font-size: inherit; font-weight: inherit; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rov-status-bar__clock-colon { display: inline-block; animation: rov-clock-colon-blink 1s steps(1, end) infinite; }
+@keyframes rov-clock-colon-blink { 0%, 49.999% { opacity: 1; } 50%, 100% { opacity: .18; } }
+@media (prefers-reduced-motion: reduce) { .rov-status-bar__clock-colon { animation: none; } }
 .rov-status-bar .rov-instrument, .rov-link-status { gap: .32rem; color: var(--rov-shell-text); font-size: inherit; }
 .rov-status-bar .rov-instrument--unavailable { color: var(--rov-shell-muted); }
 .rov-status-bar .rov-battery--normal { color: #43d17a; }

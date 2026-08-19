@@ -33,6 +33,9 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 DEFAULT_CAMERA_CONFIG = PROJECT_ROOT / "configs" / "cameras.json"
 CAMERA_CONFIG_PATH = Path(os.getenv("CAMERA_CONFIG", str(DEFAULT_CAMERA_CONFIG)))
+DEPLOYED_ROBOT_PROFILE_PATH = Path("/etc/robot/profile.json")
+ROBOT_PROFILE_PATH = Path(os.getenv("ROBOT_PROFILE_PATH", str(DEPLOYED_ROBOT_PROFILE_PATH)))
+ROBOT_PROFILE_NAME = os.getenv("ROBOT_PROFILE", "rov")
 NATS_URL = os.getenv("NATS_URL", "nats://127.0.0.1:4222")
 NATS_SUBJECT = os.getenv("NATS_SUBJECT", ">")
 MAP_TILE_PROXY = os.getenv("MAP_TILE_PROXY", "false").lower() == "true"
@@ -74,6 +77,61 @@ class MediaConfig(BaseModel):
 
 class SimulationTelemetry(BaseModel):
     values: dict[str, float]
+
+
+class TimeSynchronisationConfig(BaseModel):
+    """Browser-to-Control clock synchronisation settings in a robot profile."""
+
+    enabled: bool = True
+    command_subject: str = Field(pattern=r"^[a-z0-9]+(?:\.[a-z0-9-]+)+$")
+    status_subject: str = Field(pattern=r"^[a-z0-9]+(?:\.[a-z0-9-]+)+$")
+    interval_seconds: int = Field(default=60, ge=30, le=3_600)
+    minimum_adjustment_seconds: float = Field(default=0.5, ge=0, le=60)
+
+
+class ActiveRobotTimeProfile(BaseModel):
+    """The minimum active-profile fields required by the Cockpit time relay."""
+
+    profile_id: str = Field(min_length=1)
+    namespace: str = Field(pattern=r"^[a-z0-9-]+$")
+    time_synchronisation: TimeSynchronisationConfig | None = None
+
+
+class BrowserTimeSynchronisation(BaseModel):
+    """UTC supplied by the authenticated browser in Unix milliseconds."""
+
+    unix_time_ms: int = Field(ge=1_704_067_200_000, le=4_102_444_800_000)
+
+
+def active_robot_profile_path() -> Path:
+    """Prefer the deployed profile, with a local source-profile fallback for development."""
+    if "ROBOT_PROFILE_PATH" in os.environ or ROBOT_PROFILE_PATH.is_file():
+        return ROBOT_PROFILE_PATH
+    return PROJECT_ROOT / "configs" / "profiles" / f"{ROBOT_PROFILE_NAME}.json"
+
+
+def load_active_robot_time_profile() -> ActiveRobotTimeProfile:
+    """Load profile-derived time relay settings once during Cockpit startup."""
+    path = active_robot_profile_path()
+    try:
+        profile = ActiveRobotTimeProfile.model_validate_json(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise RuntimeError(f"Active robot profile was not found: {path}") from exc
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise RuntimeError(f"Active robot profile is invalid: {path}: {exc}") from exc
+
+    config = profile.time_synchronisation
+    if config is not None:
+        expected_command = f"{profile.namespace}.cockpit.command.system.time-sync"
+        expected_status = f"{profile.namespace}.control.status.system.time-sync"
+        if config.command_subject != expected_command or config.status_subject != expected_status:
+            raise RuntimeError(
+                "Active robot profile time-synchronisation subjects do not match its namespace"
+            )
+    return profile
+
+
+ACTIVE_ROBOT_TIME_PROFILE = load_active_robot_time_profile()
 
 
 def load_media_config() -> MediaConfig:
@@ -369,6 +427,36 @@ def authenticated_user(request: Request) -> dict[str, str] | None:
 async def session_info(request: Request):
     user = authenticated_user(request)
     return {"authenticated": user is not None, "username": user["user"] if user else None, "role": user["role"] if user else None}
+
+
+@app.post("/api/system/time-sync")
+async def relay_browser_time(payload: BrowserTimeSynchronisation, request: Request):
+    """Relay a signed-in browser's UTC time to the active Control profile over NATS."""
+    user = authenticated_user(request)
+    if user is None or user["role"] not in {"driver", "admin"}:
+        raise HTTPException(status_code=403, detail="Driver or administrator authentication is required")
+
+    config = ACTIVE_ROBOT_TIME_PROFILE.time_synchronisation
+    if config is None or not config.enabled:
+        raise HTTPException(status_code=404, detail="Browser time synchronisation is not configured for this robot")
+    client = getattr(request.app.state, "nats_client", None)
+    if client is None:
+        raise HTTPException(status_code=503, detail="NATS Core is unavailable")
+
+    utc_timestamp = datetime.fromtimestamp(payload.unix_time_ms / 1_000, timezone.utc)
+    message = {
+        "value": payload.unix_time_ms,
+        "units": "ms",
+        "timestamp": utc_timestamp.isoformat().replace("+00:00", "Z"),
+        "profile": ACTIVE_ROBOT_TIME_PROFILE.profile_id,
+        "source": "cockpit-browser",
+    }
+    try:
+        await client.publish(config.command_subject, json.dumps(message, separators=(",", ":")).encode())
+        await client.flush(timeout=1)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Could not publish time synchronisation") from exc
+    return {"accepted": True, "interval_seconds": config.interval_seconds}
 
 
 @app.get("/account/", response_class=HTMLResponse)

@@ -10,30 +10,27 @@
         <img id="mainCamera" src="/cam1" alt="Main ROV camera" />
     </div>
 
-    <div class="network-rate" aria-label="Estimated browser network rate" title="Estimated HTTP traffic between this browser and the Cockpit server">
-        <span><i class="fa-solid fa-arrow-down network-arrow" aria-hidden="true"></i> <span id="downloadRate">--</span> kB/s</span>
-        <span><i class="fa-solid fa-arrow-up network-arrow" aria-hidden="true"></i> <span id="uploadRate">--</span> kB/s</span>
-    </div>
-
-    <style>
-        .network-rate {
-            position: fixed;
-            z-index: 3;
-            top: calc(var(--rov-topbar-height) + 6px);
-            right: 14px;
-            display: flex;
-            gap: 12px;
-            padding: 5px 9px;
-            border-radius: 8px;
-            color: #fff;
-            background: rgba(20, 35, 48, .72);
-            font: 11px Arial, sans-serif;
-            text-shadow: 0 1px 3px #000;
-        }
-
-        .network-arrow { color: #ffb000; font-size: 15px; }
-
-    </style>
+    <aside class="rov-diagnostic-tray" aria-label="Live-view diagnostics">
+        <section class="rov-diagnostic-tray__panel" id="live-diagnostics" hidden>
+            <header class="rov-diagnostic-tray__header">
+                <h2><i class="fa-solid fa-stethoscope" aria-hidden="true"></i> Diagnostics</h2>
+                <button class="rov-diagnostic-tray__close" type="button" data-diagnostic-close aria-label="Close diagnostics"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </header>
+            <dl class="rov-diagnostic-tray__metrics" aria-label="Estimated browser network rate" title="Estimated HTTP traffic between this browser and the Cockpit server">
+                <div>
+                    <dt><i class="fa-solid fa-arrow-down" aria-hidden="true"></i> Download</dt>
+                    <dd><output id="downloadRate">--</output> kB/s</dd>
+                </div>
+                <div>
+                    <dt><i class="fa-solid fa-arrow-up" aria-hidden="true"></i> Upload</dt>
+                    <dd><output id="uploadRate">--</output> kB/s</dd>
+                </div>
+            </dl>
+        </section>
+        <button class="rov-diagnostic-tray__toggle" type="button" data-diagnostic-toggle aria-expanded="false" aria-controls="live-diagnostics" title="Open diagnostics">
+            <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>
+        </button>
+    </aside>
 
     <!-- The TypeScript build emits ES modules; map Vue to the committed runtime vendor asset. -->
     
@@ -65,6 +62,17 @@
 <script type="module" src="/static/dist/components/rov-depth.js"></script>
 <script>
         (() => {
+            const toggle = document.querySelector('[data-diagnostic-toggle]');
+            const close = document.querySelector('[data-diagnostic-close]');
+            const panel = document.getElementById('live-diagnostics');
+            const setDiagnosticsOpen = open => {
+                if (!toggle || !panel) return;
+                panel.hidden = !open;
+                toggle.setAttribute('aria-expanded', String(open));
+            };
+            toggle?.addEventListener('click', () => setDiagnosticsOpen(panel?.hidden));
+            close?.addEventListener('click', () => setDiagnosticsOpen(false));
+
             const download = document.getElementById('downloadRate');
             const upload = document.getElementById('uploadRate');
             let previous = performance.now();
