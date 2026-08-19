@@ -116,10 +116,10 @@ Cockpit is maintained separately from the other robot services.
 The intended repository boundaries are:
 
 ```text
-ROV - Cockpit
-ROV - Control
-ROV - Datalogger
-ROV - HiL and SiL
+ROV---Cockpit
+ROV---Control
+ROV---Datalogger
+ROV---HiL-and-SiL
 ```
 
 Cockpit owns the operator-facing web application.
