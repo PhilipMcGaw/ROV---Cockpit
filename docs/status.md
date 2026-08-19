@@ -12,6 +12,8 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - Independent `<rov-depth>` Web Component consuming shared cockpit state.
 - Independent `<rov-battery>`, `<rov-network-status>`, and `<rov-depth>` Web Components consuming shared cockpit state.
 - ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay. This is the intended navigation instrument for the ROV cockpit.
+- The former standalone heading band and depth meter have been removed; heading and depth are rendered only within the combined HUD.
+- The HUD presentation has been rebuilt toward the reference design: transparent central attitude arcs, side roll scales, a right-side depth scale, and a bottom heading tape. Heading marks are projected relative to the live heading in 3-degree increments, with major/cardinal labels and a fixed centre pointer.
 - Reusable HUD style editor with live colour and line-thickness controls; settings currently persist in browser local storage.
 - Development sensor simulator page with runtime enable/disable control and slider-driven browser telemetry injection.
 - Existing instruments, camera handling, media capture/download, CSV access, authentication, and Gamepad API support remain part of the application.

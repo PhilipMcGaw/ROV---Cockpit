@@ -451,6 +451,14 @@ The HUD does not redefine the underlying attitude telemetry model.
 
 Other robot profiles may omit the ROV HUD entirely.
 
+The live ROV page does not include separate heading-band or depth-meter
+widgets. Heading and depth are rendered by the combined HUD only.
+
+The HUD reference presentation is a transparent video overlay with open central
+attitude arcs, graduated roll scales on both sides, a right-side depth scale,
+and a graduated heading tape along the bottom. A filled dark circular panel is
+not the intended primary presentation.
+
 ### HUD style editing
 
 The Cockpit provides a reusable instrument-style editor for the ROV HUD. It

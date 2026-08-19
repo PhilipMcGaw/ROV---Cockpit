@@ -19,11 +19,6 @@
   "instruments": [
     { "id": "rov-hud", "enabled": true, "position": "navigation-overlay" },
     { "id": "battery", "enabled": true, "position": "top-bar" },
-    { "id": "heading", "enabled": true, "position": "heading-strip" },
-    { "id": "depth", "enabled": true, "position": "depth-strip" },
-    { "id": "attitude", "enabled": true, "position": "instrument-row" },
-    { "id": "pitch", "enabled": true, "position": "instrument-row" },
-    { "id": "camera-pitch", "enabled": true, "position": "instrument-row" },
     { "id": "network-status", "enabled": true, "position": "top-bar" }
   ],
   "telemetry": {

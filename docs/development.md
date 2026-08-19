@@ -94,6 +94,10 @@ The launcher calls `scripts/build_frontend.bat` on Windows or `scripts/build_fro
 
 The depth top-bar display is now implemented as `<rov-depth>`. It consumes the typed `sensor/water/depth` state without opening a WebSocket or knowing about NATS.
 
+The live ROV page does not render the former standalone heading band or depth meter. These values are owned by the combined `<rov-hud>` instrument.
+
+The HUD is a transparent video overlay. Its reference presentation uses open central attitude arcs, roll scales on both sides, a right-side depth scale, and a graduated heading tape along the bottom. The heading tape follows the upstream CompassHUD approach: 3-degree marks are projected relative to the current heading, only the visible +/-90-degree region is shown, and cardinal/major labels are retained. The video remains visible through the instrument; the HUD must not use a filled dark panel as its primary background.
+
 ## HUD style editor
 
 The main Cockpit page includes a reusable `rov-instrument-style-editor` for the ROV HUD. It provides live controls for text colour, line colour, accent colour, and line thickness. Values currently persist in browser local storage under a profile- and component-specific key; robot-backed profile persistence is planned.
