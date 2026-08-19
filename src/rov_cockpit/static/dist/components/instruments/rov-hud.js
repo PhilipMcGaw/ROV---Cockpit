@@ -17,19 +17,7 @@ export class RovHud extends HTMLElement {
     else
         this.set("[data-heading]", "---°"); this.set("[data-depth-scale] [data-value]", valid(d) ? `${d.value.toFixed(1)} m` : "-- m"); this.querySelectorAll("[data-roll-scale]").forEach(x => x.style.setProperty("--scale-rotate", `${rv ?? 0}deg`)); this.querySelector("[data-depth-scale]")?.style.setProperty("--depth-offset", valid(d) ? `${Math.max(-120, Math.min(120, d.value * -12))}px` : "0px"); }
     drawAttitude(roll, pitch) { const canvas = this.querySelector(".rov-hud__attitude canvas"), ctx = canvas?.getContext("2d"); if (!canvas || !ctx)
-        return; const w = canvas.width, h = canvas.height, cx = w / 2, cy = h / 2, radius = Math.min(w, h) * .34, pitchPx = (pitch ?? 0) * 2; ctx.clearRect(0, 0, w, h); ctx.save(); ctx.translate(cx, cy); ctx.rotate(-((roll ?? 0) * Math.PI) / 180); ctx.translate(0, pitchPx); ctx.strokeStyle = getComputedStyle(this).getPropertyValue("--hud-line") || "#fff"; ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth = 2; ctx.font = "600 12px Arial"; ctx.textAlign = "center"; for (const angle of [-30, -10, 0, 10, 30]) {
-        const y = -angle * 2;
-        ctx.setLineDash([]);
-        ctx.lineWidth = angle === 0 ? 3 : 2;
-        ctx.beginPath();
-        ctx.moveTo(-radius * 1.8, y);
-        ctx.lineTo(-radius, y);
-        ctx.moveTo(radius, y);
-        ctx.lineTo(radius * 1.8, y);
-        ctx.stroke();
-        ctx.fillText(String(angle), -radius * 1.95, y - 4);
-        ctx.fillText(String(angle), radius * 1.95, y - 4);
-    } ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, radius, Math.PI * .75, Math.PI * 1.25); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, radius, -Math.PI * .25, Math.PI * .25); ctx.stroke(); ctx.restore(); }
+        return; const w = canvas.width, h = canvas.height, cx = w / 2, cy = h / 2, radius = Math.min(w, h) * .34, pitchPx = (pitch ?? 0) * 2; ctx.clearRect(0, 0, w, h); ctx.save(); ctx.translate(cx, cy); ctx.rotate(-((roll ?? 0) * Math.PI) / 180); ctx.translate(0, pitchPx); ctx.strokeStyle = getComputedStyle(this).getPropertyValue("--hud-line") || "#fff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-radius * 1.8, 0); ctx.lineTo(-radius, 0); ctx.moveTo(radius, 0); ctx.lineTo(radius * 1.8, 0); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, radius, Math.PI * .75, Math.PI * 1.25); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, radius, -Math.PI * .25, Math.PI * .25); ctx.stroke(); ctx.restore(); }
     updateHeadingTape() { this.querySelectorAll("[data-angle]").forEach(item => { const relative = wrap180(Number(item.dataset.angle) - this.heading); item.style.transform = `translateX(calc(-50% + ${relative * 4}px))`; item.style.opacity = Math.abs(relative) > 75 ? "0" : "1"; }); }
     renderScales() { const labels = [-30, -10, 0, 10, 30]; for (const side of ["left", "right"])
         this.querySelector(`[data-roll-scale=${side}]`).innerHTML = labels.map(v => `<span class="${v === 0 ? "zero" : "dotted"}"><b>${v}</b><i></i></span>`).join(""); this.querySelector("[data-depth-scale]").innerHTML = `<output data-value>-- m</output>${[-10, -5, 0, 5, 10].map(v => `<span class="${v === 0 ? "zero" : "dotted"}"><b>${v} m</b><i></i></span>`).join("")}`; this.querySelector("[data-heading-scale]").innerHTML = Array.from({ length: 73 }, (_, i) => { const a = i * 5 - 180, c = a % 45 === 0, names = { 0: "N", 45: "NE", 90: "E", 135: "SE", 180: "S", [-135]: "SW", [-90]: "W", [-45]: "NW" }; return `<span data-angle="${a}" class="${c ? "cardinal" : ""}"><i></i>${a % 15 === 0 ? `${a < 0 ? a + 360 : a}°` : ""}</span>`; }).join(""); this.updateHeadingTape(); }
