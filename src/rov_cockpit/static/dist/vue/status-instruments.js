@@ -11,6 +11,13 @@ const statusInstrument = (icon, label, topic, format) => defineComponent({
         return () => h("div", { class: ["rov-instrument", value.value === null ? "rov-instrument--unavailable" : "rov-instrument--available"], role: "status", "aria-live": "polite" }, [h("i", { class: `fa-solid ${icon}`, "aria-hidden": "true" }), h("span", { class: "rov-instrument__label" }, label), h("output", { class: "rov-instrument__value" }, format(value.value))]);
     },
 });
-export const RovBatteryVue = statusInstrument("fa-battery-half", "Battery", TOPICS.batteryPercentage, value => value !== null && Number.isFinite(Number(value)) ? `${Math.max(0, Math.min(100, Math.round(Number(value) * 10)))} %` : "Unavailable");
+export const RovBatteryVue = statusInstrument("fa-battery-half", "Battery", TOPICS.batteryPercentage, value => {
+    if (value === null || !Number.isFinite(Number(value)))
+        return "Unavailable";
+    const raw = Number(value);
+    // Robot telemetry historically uses 0-10; the simulator uses the clearer 0-100 range.
+    const percentage = raw <= 1 ? raw * 100 : raw <= 10 ? raw * 10 : raw;
+    return `${Math.max(0, Math.min(100, Math.round(percentage)))} %`;
+});
 export const mountVueStatusInstrument = (target, component) => { const app = createApp(component); app.mount(target); return () => app.unmount(); };
 //# sourceMappingURL=status-instruments.js.map

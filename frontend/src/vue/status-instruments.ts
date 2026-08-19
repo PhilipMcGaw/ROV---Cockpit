@@ -11,5 +11,11 @@ const statusInstrument = (icon: string, label: string, topic: string, format: (v
   },
 });
 
-export const RovBatteryVue = statusInstrument("fa-battery-half", "Battery", TOPICS.batteryPercentage, value => value !== null && Number.isFinite(Number(value)) ? `${Math.max(0, Math.min(100, Math.round(Number(value) * 10)))} %` : "Unavailable");
+export const RovBatteryVue = statusInstrument("fa-battery-half", "Battery", TOPICS.batteryPercentage, value => {
+  if (value === null || !Number.isFinite(Number(value))) return "Unavailable";
+  const raw = Number(value);
+  // Robot telemetry historically uses 0-10; the simulator uses the clearer 0-100 range.
+  const percentage = raw <= 1 ? raw * 100 : raw <= 10 ? raw * 10 : raw;
+  return `${Math.max(0, Math.min(100, Math.round(percentage)))} %`;
+});
 export const mountVueStatusInstrument = (target: Element, component: ReturnType<typeof defineComponent>): (() => void) => { const app = createApp(component); app.mount(target); return () => app.unmount(); };

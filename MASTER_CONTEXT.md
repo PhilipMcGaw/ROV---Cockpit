@@ -471,7 +471,9 @@ planned.
 
 ### Development sensor simulator
 
-The `/simulator/` page is always visible in the Cockpit navigation. A runtime
+The `/simulator/` page is always visible in the Cockpit navigation. Slider
+changes are sent automatically with a short debounce; no manual send action is
+required. A runtime
 switch controls whether its sliders may inject fake depth, heading, pitch,
 roll, battery voltage, and battery percentage values into the browser telemetry
 path. The switch defaults to off on process start unless
@@ -2183,3 +2185,8 @@ The key architectural principles are:
 
 > **Safety must remain effective when Cockpit, the browser, WebSocket, or NATS
 > connection fails.**
+## Battery telemetry contract
+
+Battery state-of-charge telemetry is a numeric percentage in the inclusive
+`0–100` range. Legacy `0–10` values may be accepted temporarily by Cockpit,
+but must not be used by new publishers or simulator controls.

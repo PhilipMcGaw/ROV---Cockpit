@@ -554,8 +554,10 @@ async def simulation_telemetry(payload: SimulationTelemetry):
     for topic, value in payload.values.items():
         with nats_lock:
             nats_data[topic] = str(value)
-        if telemetry_loop is not None and telemetry_loop.is_running():
-            asyncio.run_coroutine_threadsafe(broadcast_telemetry(topic, str(value)), telemetry_loop)
+        # This endpoint already runs on the telemetry event loop. Await the
+        # broadcast directly so every simulated topic reaches every browser
+        # client before the request completes.
+        await broadcast_telemetry(topic, str(value))
     return {"ok": True, "topics": len(payload.values)}
 
 

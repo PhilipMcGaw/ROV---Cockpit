@@ -7,6 +7,15 @@ import { mountVueStatusInstrument, RovBatteryVue } from "./vue/status-instrument
 export const cockpitTelemetryStore = new TelemetryStore();
 export const cockpitTelemetrySocket = new TelemetryWebSocket(cockpitTelemetryStore);
 
+declare global {
+  interface Window {
+    rovCockpitTelemetry?: TelemetryStore;
+  }
+}
+
+// Publish the store before Vue instruments mount so they can subscribe during setup.
+window.rovCockpitTelemetry = cockpitTelemetryStore;
+
 // This layer is intentionally passive during the incremental migration. Existing
 // inline instruments continue to use their current router until they are migrated.
 const mountVueInstruments = (): void => {
@@ -21,10 +30,3 @@ if (document.readyState === "loading") {
   mountVueInstruments();
 }
 
-declare global {
-  interface Window {
-    rovCockpitTelemetry?: TelemetryStore;
-  }
-}
-
-window.rovCockpitTelemetry = cockpitTelemetryStore;

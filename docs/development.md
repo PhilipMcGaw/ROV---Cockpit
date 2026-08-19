@@ -104,7 +104,8 @@ The main Cockpit page includes a reusable `rov-instrument-style-editor` for the 
 
 ## Development sensor simulator
 
-The `/simulator/` page is always available from the main navigation. Its runtime switch is off by default unless `COCKPIT_ENABLE_SIMULATOR=true` is set. When enabled, sliders inject depth, heading, pitch, roll, battery voltage, and battery percentage values into the Cockpit browser telemetry path. The simulator does not publish to NATS or Control and must not be enabled during live physical robot operation.
+The `/simulator/` page is always available from the main navigation. Its runtime switch is off by default unless `COCKPIT_ENABLE_SIMULATOR=true` is set. When enabled, slider changes automatically send depth, heading, pitch, roll, battery voltage, and battery percentage values into the Cockpit browser telemetry path; no send button is required. Simulation injection broadcasts each submitted topic directly to connected WebSocket clients before the request completes, so the HUD and status instruments update together. The simulator does not publish to NATS or Control and must not be enabled during live physical robot operation.
+Secondary pages use neutral `--` status placeholders in the shared header; live telemetry presentation belongs to the Live Cockpit page and the combined ROV HUD.
 
 ## Camera media
 
@@ -119,3 +120,5 @@ General-purpose page styling now uses the readable Pico CSS file from the fronte
 The Browser Gamepad API works with standard HID controllers on Windows and macOS in current Edge, Chrome, and Firefox releases; Safari is supported on macOS. Pair the controller in the operating system before opening `/gamepad/`. Firefox may require a button press before it reports the controller.
 
 Use `localhost` or `127.0.0.1` for local development. A deployed Cockpit should use HTTPS. Settings on `/gamepad/` are stored in the browser and can be adjusted without changing Python code. Test with propulsion disabled until the control mapping, arm button, dead-man button, neutral-on-disconnect behavior, and timeout handling have been verified.
+Vue status instruments require `window.rovCockpitTelemetry` to be assigned before their mount lifecycle runs; the frontend bootstrap preserves that ordering so migrated instruments receive the initial telemetry snapshot.
+Battery state-of-charge telemetry shall be numeric percent in the inclusive `0–100` range. The Vue battery instrument currently accepts legacy `0–10` values temporarily for compatibility, but the simulator and all new publishers shall use `0–100`.

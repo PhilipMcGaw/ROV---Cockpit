@@ -1,53 +1,4 @@
-<!DOCTYPE html>
-<html lang="en_gb" data-theme="dark" dir="ltr">
-  <head>
-    <meta charset="utf8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>ROV</title>
-
-    <!-- Icons -->
-      <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
-      <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
-      <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
-      <link rel="manifest" href="/static/site.webmanifest">
-
-      <link
-        rel="stylesheet"
-        type="text/css"
-            href="/static/css/pico.css"
-      />
-
-    <!-- My CSS -->
-      <link
-        rel="stylesheet"
-        type="text/css"
-            href="/static/css/cockpit.css"
-      />
-      <link rel="stylesheet" type="text/css" href="/static/dist/styles/cockpit.css" />
-
-    <!-- Font Awesome -->
-      <link
-        rel="stylesheet"
-        type="text/css"
-        href="/static/css/all.css"
-      />
-
-    <!-- Google Fonts Roboto -->
-      <!--  <link
-        rel="stylesheet"
-        type="text/css"
-        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"
-      /> -->
-
-    <!-- JQuery -->
-      <script src="/static/js/jquery.js"></script>
-  </head>
- 
-  <body onload="menuIcons()">
-  <!-- Start your project here-->
-
-    <!-- Navbar -->
+<!-- Shared navigation fragment. The document shell is provided by base.jinja. -->
       <nav style="
         z-index: 1;
         min-height: 60px;"
@@ -70,12 +21,12 @@
               <!-- Battery Level -->
               <!-- NATS system/state-of-charge -->
               <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="batteryLevel">Error battery icon</a>
+                  <a class="nav-link" id="batteryLevel"><i class="fa-solid fa-battery-half" aria-hidden="true"></i>&nbsp;Battery --</a>
               </li>
 
               <!-- NATS battery/voltage -->
               <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="batteryVoltage">Error Voltage</a>
+                  <a class="nav-link" id="batteryVoltage">Voltage --</a>
               </li>
               <!-- End Battery Level -->
 
@@ -86,7 +37,7 @@
 
               <!-- NATS water/temperature -->
               <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="temperature">Error temperature</a>
+                  <a class="nav-link" id="temperature">Temperature --</a>
               </li>
 
               <!-- seperater -->
@@ -96,11 +47,11 @@
 
               <!-- NATS direction/depth -->
               <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="compass">Error compass</a>
+                  <a class="nav-link" id="compass">Heading --</a>
               </li>
 
               <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="depth">Error depth</a>
+                  <a class="nav-link" id="depth">Depth --</a>
               </li>
 
               <!-- seperater -->
@@ -110,7 +61,7 @@
 
               <!-- NATS system/uptime -->
               <li class="nav-item me-3 me-lg-0">
-                  <a class="nav-link" id="upTime">Error Uptime</a>
+                  <a class="nav-link" id="upTime">Uptime --</a>
               </li>
 
               <!-- seperater -->
@@ -152,13 +103,11 @@
       <!-- Container wrapper -->
     </nav>
   <!-- Navbar End-->
+<script>
+fetch('/api/session', {cache:'no-store', credentials:'same-origin'}).then(r=>r.json()).then(session => {
+  const link=document.getElementById('sessionLink');
+  if (!link || !session.authenticated) return;
+  link.href='/logout'; link.innerHTML='<i class="fa-solid fa-right-from-bracket"></i>&nbsp;'+session.username; link.title='Log out';
+}).catch(() => {});
+</script>
 
-  <script>
-    fetch('/api/session', {cache: 'no-store', credentials: 'same-origin'}).then(response => response.json()).then(session => {
-      const link = document.getElementById('sessionLink');
-      if (!link || !session.authenticated) return;
-      link.href = '/logout';
-      link.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i>&nbsp;${session.username}`;
-      link.title = 'Log out';
-    }).catch(() => {});
-  </script>
