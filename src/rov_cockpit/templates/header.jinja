@@ -12,11 +12,10 @@
       <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
       <link rel="manifest" href="/static/site.webmanifest">
 
-    <!-- MDB -->
       <link
         rel="stylesheet"
         type="text/css"
-            href="/static/css/pico.min.css"
+            href="/static/css/pico.css"
       />
 
     <!-- My CSS -->
@@ -69,12 +68,12 @@
           <ul class="navbar-nav d-flex flex-row me-1">
 
               <!-- Battery Level -->
-              <!-- MQTT System/SOC -->
+              <!-- NATS system/state-of-charge -->
               <li class="nav-item me-3 me-lg-0">
                   <a class="nav-link" id="batteryLevel">Error battery icon</a>
               </li>
 
-              <!-- MQTT Battery/Voltage -->
+              <!-- NATS battery/voltage -->
               <li class="nav-item me-3 me-lg-0">
                   <a class="nav-link" id="batteryVoltage">Error Voltage</a>
               </li>
@@ -85,7 +84,7 @@
                   <a class="nav-link">|</a>
               </li>
 
-              <!-- MQTT Water/Temperature -->
+              <!-- NATS water/temperature -->
               <li class="nav-item me-3 me-lg-0">
                   <a class="nav-link" id="temperature">Error temperature</a>
               </li>
@@ -95,7 +94,7 @@
                   <a class="nav-link">|</a>
               </li>
 
-              <!-- MQTT Direction/Depth -->
+              <!-- NATS direction/depth -->
               <li class="nav-item me-3 me-lg-0">
                   <a class="nav-link" id="compass">Error compass</a>
               </li>
@@ -109,7 +108,7 @@
                   <a class="nav-link">|</a>
               </li>
 
-              <!-- MQTT System/Uptime -->
+              <!-- NATS system/uptime -->
               <li class="nav-item me-3 me-lg-0">
                   <a class="nav-link" id="upTime">Error Uptime</a>
               </li>

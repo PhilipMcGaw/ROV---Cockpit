@@ -110,7 +110,7 @@ Motion is configured for 30-minute rolling MP4 recordings by default under its t
 
 The Windows frontend build automatically bootstraps the pinned official Node.js/npm archive into the project-local `node-runtime/` directory when required. It verifies the archive against `SHASUMS256.txt`, requires no administrator rights, does not modify PATH, and rejects direct UNC execution. Linux `scripts/1_install_dependencies.sh` installs distribution `nodejs` and `npm` packages through `apt-get` and `sudo` when absent. macOS deliberately does not install Node.js; it uses available npm, while the committed compiled output remains the fallback when npm is unavailable.
 
-General-purpose page styling now uses Pico.css from the frontend dependency `@picocss/pico`. Served Pico CSS is copied to `src/rov_cockpit/static/css/pico.min.css`; Cockpit-specific variables and compatibility classes are maintained in `src/rov_cockpit/static/css/cockpit.css`. MDB is no longer loaded by the templates.
+General-purpose page styling now uses the readable Pico CSS file from the frontend dependency `@picocss/pico`. It is served as `src/rov_cockpit/static/css/pico.css`; Cockpit-specific variables and compatibility classes are maintained in `src/rov_cockpit/static/css/cockpit.css`. The frontend build refreshes this file from the package when npm is available.
 
 The Browser Gamepad API works with standard HID controllers on Windows and macOS in current Edge, Chrome, and Firefox releases; Safari is supported on macOS. Pair the controller in the operating system before opening `/gamepad/`. Firefox may require a button press before it reports the controller.
 

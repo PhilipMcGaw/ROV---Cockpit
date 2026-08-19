@@ -1509,7 +1509,7 @@ Cockpit-specific styling is maintained in:
 src/rov_cockpit/static/css/cockpit.css
 ```
 
-MDB is not loaded by the templates.
+The templates use the readable Pico CSS file and Cockpit-specific CSS.
 
 jQuery remains an intentional legacy dependency for Flight Indicator until
 that library is isolated or replaced.

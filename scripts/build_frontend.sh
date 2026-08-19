@@ -11,4 +11,6 @@ if [[ ! -x "$NPM" ]]; then
 fi
 "$NPM" --prefix "${PROJECT_ROOT}" install --no-audit --no-fund
 "$NPM" --prefix "${PROJECT_ROOT}" run build
+PICO_SOURCE="${PROJECT_ROOT}/node_modules/@picocss/pico/css/pico.css"
+if [[ -f "$PICO_SOURCE" ]]; then cp "$PICO_SOURCE" "${PROJECT_ROOT}/src/rov_cockpit/static/css/pico.css"; fi
 printf '%s\n' '[PASS] TypeScript frontend compiled successfully.'

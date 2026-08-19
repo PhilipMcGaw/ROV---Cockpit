@@ -22,6 +22,7 @@ call "%NPM%" install --no-audit --no-fund
 if errorlevel 1 exit /b 1
 call "%NPM%" run build
 if errorlevel 1 exit /b 1
+if exist "%PROJECT_ROOT%\node_modules\@picocss\pico\css\pico.css" copy /Y "%PROJECT_ROOT%\node_modules\@picocss\pico\css\pico.css" "%PROJECT_ROOT%\src\rov_cockpit\static\css\pico.css" >nul
 popd
 echo [PASS] TypeScript frontend compiled successfully.
 exit /b 0
