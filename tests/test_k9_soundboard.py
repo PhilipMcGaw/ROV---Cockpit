@@ -13,7 +13,13 @@ import sys
 
 sys.path.insert(0, str(ROOT / "src"))
 
-from rov_cockpit.app import ActiveRobotProfile, SoundboardPlaybackRequest, relay_soundboard_playback
+from rov_cockpit.app import (
+    ActiveRobotProfile,
+    SoundboardPlaybackRequest,
+    home,
+    relay_soundboard_playback,
+    render_template,
+)
 
 
 def load_profile(name: str) -> ActiveRobotProfile:
@@ -90,11 +96,25 @@ def test_soundboard_drawer_and_endpoint_are_profile_gated() -> None:
     assert 'fa-solid {{ active_robot_profile.identity_icon }}' in header
 
 
+def test_every_page_renderer_supplies_the_active_profile() -> None:
+    request = SimpleNamespace(
+        scope={"type": "http", "method": "GET", "path": "/", "headers": []}
+    )
+    context = render_template(request, "login.jinja", {"error": None}).context
+    assert context["active_robot_profile"].profile_id == "rov"
+
+    response = asyncio.run(home(request))
+    body = response.body.decode("utf-8")
+    assert "home — ROV" in body
+    assert 'fa-solid fa-otter' in body
+
+
 def main() -> int:
     checks = (
         test_only_k9_enables_the_profile_soundboard_drawer,
         test_authorised_k9_soundboard_request_publishes_the_profile_command,
         test_soundboard_drawer_and_endpoint_are_profile_gated,
+        test_every_page_renderer_supplies_the_active_profile,
     )
     for check in checks:
         check()

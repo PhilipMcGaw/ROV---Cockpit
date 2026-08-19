@@ -1586,8 +1586,8 @@ must update the licence register when applicable.
 The shared Vue battery instrument interprets battery telemetry strictly as a
 `0–100` percentage. It uses Font Awesome battery-state icons and CSS colour
 states: normal above 25 %, low from 11 % to 25 %, and critical at 10 % or
-below. Invalid battery telemetry is shown as unavailable; legacy `0–10` and
-`0–1` scaling is not supported.
+below. Invalid battery telemetry uses the empty icon and `-- %` placeholder;
+legacy `0–10` and `0–1` scaling is not supported.
 
 ---
 
@@ -2276,7 +2276,9 @@ Battery state-of-charge telemetry is a numeric percentage in the inclusive
 All Cockpit HTML pages use the shared `templates/base.jinja` shell and
 `templates/header.jinja` navigation. Page-specific templates must not recreate
 the document head or primary navigation; they provide content and scoped
-scripts through Jinja blocks.
+scripts through Jinja blocks. The FastAPI page renderer injects the active
+robot profile explicitly into every page context, so these shared templates
+can safely use the profile identity without relying on mutable Jinja globals.
 The shared header is a compact translucent operator shell: it contains the ROV
 identity, a status/alert surface, battery percentage, voltage, a browser-local
 24-hour clock with a 1 Hz flashing colon, and a `Link` indicator for the Cockpit browser WebSocket. Navigation is

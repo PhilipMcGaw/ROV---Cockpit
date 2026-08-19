@@ -185,7 +185,29 @@ ACTIVE_ROBOT_PROFILE = load_active_robot_profile()
 # Retained as a named alias while time synchronisation is migrated to the full
 # active profile object.
 ACTIVE_ROBOT_TIME_PROFILE = ACTIVE_ROBOT_PROFILE
-templates.env.globals["active_robot_profile"] = ACTIVE_ROBOT_PROFILE
+
+
+def render_template(
+    request: Request,
+    name: str,
+    context: dict[str, Any] | None = None,
+    *,
+    status_code: int = 200,
+):
+    """Render a Cockpit page with the non-optional active profile context.
+
+    Shared templates use the profile for the document title and vehicle
+    identity. Supplying it per response makes every page deterministic and
+    avoids depending on a mutable Jinja environment global.
+    """
+    page_context = dict(context or {})
+    page_context["active_robot_profile"] = ACTIVE_ROBOT_PROFILE
+    return templates.TemplateResponse(
+        request=request,
+        name=name,
+        context=page_context,
+        status_code=status_code,
+    )
 
 
 def load_media_config() -> MediaConfig:
@@ -440,17 +462,17 @@ async def favicon():
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     soundboard = ACTIVE_ROBOT_PROFILE.soundboard if ACTIVE_ROBOT_PROFILE.capabilities.get("soundboard", False) else None
-    return templates.TemplateResponse(
-        request=request,
-        name="home.jinja",
-        context={"config": {"simulator_enabled": ENABLE_SIMULATOR}, "soundboard": soundboard},
+    return render_template(
+        request,
+        "home.jinja",
+        {"config": {"simulator_enabled": ENABLE_SIMULATOR}, "soundboard": soundboard},
     )
 
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     error = None if USERS_PATH.is_file() else "No user accounts are configured yet. Create configs/users.json from configs/users.example.json."
-    return templates.TemplateResponse(request=request, name="login.jinja", context={"error": error})
+    return render_template(request, "login.jinja", {"error": error})
 
 
 @app.post("/login", response_class=HTMLResponse)
@@ -460,7 +482,7 @@ async def login(request: Request):
     password = form.get("password", [""])[0]
     user = load_users(USERS_PATH).get(username)
     if not user or not verify_password(password, user.get("password_hash", "")):
-        return templates.TemplateResponse(request=request, name="login.jinja", context={"error": "Invalid username or password"}, status_code=401)
+        return render_template(request, "login.jinja", {"error": "Invalid username or password"}, status_code=401)
     response = RedirectResponse(url="/", status_code=303)
     response.set_cookie(SESSION_COOKIE, create_session(username, user["role"], AUTH_SECRET), httponly=True, samesite="lax")
     return response
@@ -557,7 +579,11 @@ async def account_page(request: Request):
         return RedirectResponse(url="/login", status_code=303)
     users = load_users(USERS_PATH)
     managed_users = sorted(users) if user["role"] == "admin" else [user["user"]]
-    return templates.TemplateResponse(request=request, name="account.jinja", context={"user": user, "managed_users": managed_users, "message": None, "error": None})
+    return render_template(
+        request,
+        "account.jinja",
+        {"user": user, "managed_users": managed_users, "message": None, "error": None},
+    )
 
 
 @app.post("/account/password")
@@ -607,10 +633,10 @@ async def telemetry_socket(websocket: WebSocket):
 @app.get("/files/", response_class=HTMLResponse)
 async def files(request: Request):
     prune_videos()
-    return templates.TemplateResponse(
-        request=request,
-        name="files.jinja",
-        context={
+    return render_template(
+        request,
+        "files.jinja",
+        {
             "cameras": load_camera_config()["cameras"],
             "media_config": load_media_config(),
             "stills": media_files(STILLS_DIR, (".jpg", ".jpeg", ".png")),
@@ -621,7 +647,11 @@ async def files(request: Request):
 
 @app.get("/data/", response_class=HTMLResponse)
 async def data_page(request: Request):
-    return templates.TemplateResponse(request=request, name="data.jinja", context={"files": [{"name": path.name, "relative": path.relative_to(CSV_ROOT).as_posix()} for path in csv_files()]})
+    return render_template(
+        request,
+        "data.jinja",
+        {"files": [{"name": path.name, "relative": path.relative_to(CSV_ROOT).as_posix()} for path in csv_files()]},
+    )
 
 
 @app.get("/api/data/fields")
@@ -687,34 +717,26 @@ async def download_media(media_type: str, filename: str):
 @app.get("/map/", response_class=HTMLResponse)
 async def map_page(request: Request):
     tile_prefix = "/map-tiles" if MAP_TILE_PROXY else None
-    return templates.TemplateResponse(
-        request=request,
-        name="map.jinja",
-        context={"map_tile_prefix": tile_prefix},
-    )
+    return render_template(request, "map.jinja", {"map_tile_prefix": tile_prefix})
 
 
 @app.get("/3d/", response_class=HTMLResponse)
 async def threed(request: Request):
-    return templates.TemplateResponse(request=request, name="3d.jinja")
+    return render_template(request, "3d.jinja")
 
 
 @app.get("/cameras/", response_class=HTMLResponse)
 async def cameras_page(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="cameras.jinja",
-        context={"cameras": load_camera_config()["cameras"]},
-    )
+    return render_template(request, "cameras.jinja", {"cameras": load_camera_config()["cameras"]})
 
 
 @app.get("/gamepad/", response_class=HTMLResponse)
 async def gamepad_page(request: Request):
-    return templates.TemplateResponse(request=request, name="gamepad.jinja")
+    return render_template(request, "gamepad.jinja")
 
 @app.get("/simulator/", response_class=HTMLResponse)
 async def simulator_page(request: Request):
-    return templates.TemplateResponse(request=request, name="simulator.jinja")
+    return render_template(request, "simulator.jinja")
 
 @app.get("/api/development/simulation/state")
 async def simulation_state():
