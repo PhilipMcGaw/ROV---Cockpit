@@ -21,6 +21,7 @@ body.rov-menu-open::after { content: ""; position: fixed; z-index: 38; inset: 0;
 .rov-battery--normal { color: #43d17a; }
 .rov-battery--low { color: #ffc107; }
 .rov-battery--critical { color: #ff5252; }
+.rov-hud__roll-scale { top: 28%; }
 .rov-battery--unavailable { color: #b8bec8; }
 .rov-hud__heading [data-heading-scale] { position: relative; display: block; height: 2rem; overflow: hidden; white-space: nowrap; }
 .rov-hud__heading [data-heading-scale] span { position: absolute; top: 0; left: 50%; min-width: 2.4rem; height: 1.5rem; transform-origin: center; transition: transform .12s linear, opacity .12s linear; text-align: center; }
@@ -29,6 +30,7 @@ body.rov-menu-open::after { content: ""; position: fixed; z-index: 38; inset: 0;
 .rov-hud__attitude > .rov-hud__roll, .rov-hud__attitude > .rov-hud__pitch { position: absolute; left: 50%; transform: translateX(-50%); color: var(--hud-text); font-weight: 700; white-space: nowrap; z-index: 1; }
 .rov-hud__attitude > .rov-hud__roll { top: 16%; }
 .rov-hud__attitude > .rov-hud__pitch { bottom: 16%; }
+.rov-hud__roll-scale { top: 28%; }
 .card { padding: var(--rov-panel-gap); border: 1px solid var(--rov-panel-border); border-radius: var(--rov-panel-radius); background: var(--rov-panel-background); }
 .form-control { width: 100%; } .btn { display: inline-block; width: auto; } .table-responsive { overflow-x: auto; }
 .instrument-style-editor { position: fixed; z-index: 30; top: 5rem; right: 1rem; pointer-events: auto; color: #fff; }
