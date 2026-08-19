@@ -4,7 +4,7 @@ Documentation is an engineering deliverable and must be updated in the same chan
 
 ## Mandatory updates
 
-Update the relevant documentation whenever a change affects user-visible behaviour, APIs, configuration, hardware support, safety behaviour, deployment, data formats, tests, workflows, or frontend architecture. Update `MASTER_CONTEXT.md` whenever architecture, project boundaries, operating conventions, or validation status changes.
+Update the relevant documentation whenever a change affects user-visible behaviour, APIs, configuration, hardware support, safety behaviour, deployment, data formats, tests, workflows, frontend architecture, dependencies, or bundled assets. Update `LICENSES.md` whenever a dependency, generated vendor file, font, icon set, stylesheet, JavaScript library, or other third-party asset is added, removed, replaced, or redistributed. Update `MASTER_CONTEXT.md` whenever architecture, project boundaries, operating conventions, or validation status changes.
 
 This is a hard completion requirement, not an optional follow-up. A behaviour-affecting change is incomplete until the same change set contains the relevant documentation updates and, where applicable, an updated `MASTER_CONTEXT.md`. Code review and hand-off must treat missing documentation as a defect.
 
@@ -14,7 +14,7 @@ Documentation must distinguish implemented, automated-test verified, bench-teste
 
 ## Enforcement
 
-Run `python tests/test_documentation.py` from the repository root. The audit checks required maintained documents, current-state status sections, status vocabulary, and references to scripts, configuration, examples, and frontend artefacts. The pull-request classifier `tests/documentation_change_policy.py` applies the maintainable rules in `tests/documentation_change_policy.json` to changed files. A classified behaviour-affecting change must include a documentation file. Intentional exemptions are listed in that JSON file with their reasons. Both checks run in CI and must pass before a change is accepted.
+Run `python tests/test_documentation.py` from the repository root. The audit checks required maintained documents, current-state status sections, status vocabulary, references to scripts, configuration, examples, frontend artefacts, and the required third-party entries in `LICENSES.md`. The pull-request classifier `tests/documentation_change_policy.py` applies the maintainable rules in `tests/documentation_change_policy.json` to changed files. Changes to application code, frontend assets, dependency manifests, or licence material must include a documentation change. A classified behaviour-affecting change must include a documentation file. Intentional exemptions are listed in that JSON file with their reasons. Both checks run in CI and must pass before a change is accepted.
 
 ## Change completion gate
 

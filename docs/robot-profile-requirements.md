@@ -22,7 +22,7 @@ The profile may define the robot hostname and unique fallback network identity. 
 
 Each profile shall define one default camera and support any number of additional cameras. Camera device paths and stream endpoints shall be configuration data, not hard-coded application assumptions.
 
-Battery state-of-charge telemetry shall use the namespaced battery-percentage topic and a numeric value in the inclusive `0–100` range, expressed as percent. `0` means empty and `100` means full. New Control publishers, simulator inputs, Datalogger records, and Cockpit displays shall use this contract; Cockpit may temporarily accept legacy `0–10` values only as a compatibility measure.
+Battery state-of-charge telemetry shall use the namespaced battery-percentage topic and a numeric value in the inclusive `0–100` range, expressed as percent. `0` means empty and `100` means full. Control publishers, simulator inputs, Datalogger records, and Cockpit displays shall use this contract; legacy `0–10` and `0–1` scaling is not supported.
 
 Camera sources shall pass through an extensible processing pipeline before reaching the common Nginx stream endpoint. The pipeline shall support source adapters for Raspberry Pi CSI, USB, and ROS 2 virtual cameras, with optional processing stages such as lens de-warping. Processing stages shall be profile-configurable so they can be introduced without changing the Cockpit camera UI or Nginx routing.
 

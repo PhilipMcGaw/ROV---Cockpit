@@ -17,6 +17,11 @@ body.rov-menu-open::after { content: ""; position: fixed; z-index: 38; inset: 0;
 .navbar .fa-lg { font-size: 1.15em; }
 .navbar rov-depth, .navbar rov-heading, .navbar rov-battery, .navbar rov-network-status { font-size: var(--rov-nav-font-size); }
 .nav-item { margin: 0; } .nav-link { color: inherit; text-decoration: none; }
+.rov-battery { display: inline-flex; align-items: center; gap: .35rem; }
+.rov-battery--normal { color: #43d17a; }
+.rov-battery--low { color: #ffc107; }
+.rov-battery--critical { color: #ff5252; }
+.rov-battery--unavailable { color: #b8bec8; }
 .card { padding: var(--rov-panel-gap); border: 1px solid var(--rov-panel-border); border-radius: var(--rov-panel-radius); background: var(--rov-panel-background); }
 .form-control { width: 100%; } .btn { display: inline-block; width: auto; } .table-responsive { overflow-x: auto; }
 .instrument-style-editor { position: fixed; z-index: 30; top: 5rem; right: 1rem; pointer-events: auto; color: #fff; }

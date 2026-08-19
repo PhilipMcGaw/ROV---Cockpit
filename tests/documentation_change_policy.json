@@ -7,10 +7,13 @@
   "documentation_required_patterns": [
     "src/**",
     "frontend/**",
+    "src/rov_cockpit/static/**",
     "configs/**",
     "scripts/**",
     "requirements.txt",
     "package.json",
+    "package-lock.json",
+    "LICENSES.md",
     "tsconfig.json",
     "README.md"
   ],

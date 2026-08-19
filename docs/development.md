@@ -122,5 +122,12 @@ The Browser Gamepad API works with standard HID controllers on Windows and macOS
 
 Use `localhost` or `127.0.0.1` for local development. A deployed Cockpit should use HTTPS. Settings on `/gamepad/` are stored in the browser and can be adjusted without changing Python code. Test with propulsion disabled until the control mapping, arm button, dead-man button, neutral-on-disconnect behavior, and timeout handling have been verified.
 Vue status instruments require `window.rovCockpitTelemetry` to be assigned before their mount lifecycle runs; the frontend bootstrap preserves that ordering so migrated instruments receive the initial telemetry snapshot.
-Battery state-of-charge telemetry shall be numeric percent in the inclusive `0–100` range. The shared header mounts the Vue battery instrument; the old inline battery renderer is removed so it cannot reintroduce the legacy `0–10` conversion. The Vue instrument still accepts legacy `0–10` values temporarily for compatibility, but the simulator and all new publishers shall use `0–100`.
+Battery state-of-charge telemetry shall be numeric percent in the inclusive `0–100` range. The shared header mounts the Vue battery instrument; the old inline battery renderer and legacy `0–10` conversion are removed. Values are interpreted strictly as percentages, so `10` means 10 % and `100` means 100 %.
+The Vue battery instrument selects the Font Awesome full, three-quarter, half, quarter, or empty battery icon according to the percentage and applies normal, low, or critical CSS colours. Invalid telemetry displays the empty icon and `Unavailable`.
+The shared voltage instrument displays the bolt icon followed directly by the voltage value, rounded to one decimal place; it does not repeat the word `Voltage`.
 All HTML pages extend `templates/base.jinja`. The base template owns the document shell, shared styles, Vue import map, cache-busted frontend bootstrap, and `header.jinja` navigation; page templates provide only their content and page-specific scripts. This ensures shared Vue instruments such as battery status and voltage mount on every page and prevents navigation/layout divergence.
+Third-party frontend licences are recorded in `LICENSES.md`. In particular,
+Vue is redistributed as a committed browser runtime and Pico CSS is served as
+a committed readable stylesheet, so their upstream MIT notices must remain
+documented alongside the project licences. Update `LICENSES.md` whenever a
+frontend package or bundled static asset is added, removed, or replaced.

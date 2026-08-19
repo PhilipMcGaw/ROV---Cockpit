@@ -11,7 +11,7 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - TypeScript state, topic mapping, parsing, and reconnecting WebSocket adapter.
 - Independent `<rov-depth>` Web Component consuming shared cockpit state.
 - Vue-rendered battery status instrument consuming shared cockpit state.
-- Battery-percentage contract documented as numeric `0–100` percent; legacy `0–10` input remains compatibility-only.
+- Battery-percentage contract enforced as numeric `0–100` percent; legacy `0–10` and `0–1` scaling is not supported.
 - Independent `<rov-network-status>` and `<rov-depth>` Web Components consuming shared cockpit state until their Vue ports are completed.
 - ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay. This is the intended navigation instrument for the ROV cockpit.
 - The former standalone heading band and depth meter have been removed; heading and depth are rendered only within the combined HUD.

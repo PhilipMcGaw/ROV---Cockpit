@@ -1532,6 +1532,23 @@ ported and tested. The battery status instrument is the first migrated visual
 surface; depth, network status, HUD, style editing, and simulator migration
 remain staged work.
 
+Third-party frontend components and their attribution obligations are recorded
+in `LICENSES.md`. This includes the committed Vue browser runtime, Pico CSS,
+Font Awesome, Leaflet, jQuery, Flight Indicators, and Weather Icons. Any
+future dependency or bundled asset must be added to that register as part of
+the same change.
+
+The documentation currency audit also verifies that `LICENSES.md` exists and
+contains the current third-party component entries. Changes to dependency
+manifests or bundled frontend assets are documentation-triggering changes and
+must update the licence register when applicable.
+
+The shared Vue battery instrument interprets battery telemetry strictly as a
+`0–100` percentage. It uses Font Awesome battery-state icons and CSS colour
+states: normal above 25 %, low from 11 % to 25 %, and critical at 10 % or
+below. Invalid battery telemetry is shown as unavailable; legacy `0–10` and
+`0–1` scaling is not supported.
+
 ---
 
 ## 30. UI layout rules
