@@ -3,14 +3,15 @@ Description=ROV Cockpit web application
 After=network.target
 
 [Service]
-User=pi
-WorkingDirectory=/home/pi/ROV---Cockpit
-ExecStart=/bin/bash /home/pi/ROV---Cockpit/run.sh
+User=@ROBOT_USER@
+WorkingDirectory=@COCKPIT_ROOT@
+EnvironmentFile=-/etc/robot/nats.env
+ExecStart=/bin/bash @COCKPIT_ROOT@/run.sh
 Environment=MAP_TILE_PROXY=true
-Environment=CSV_ROOT=/home/pi/ROV---Cockpit/media/data/csv
+Environment=CSV_ROOT=@COCKPIT_ROOT@/media/data/csv
 Restart=always
-StandardOutput=file:/home/pi/cockpit_output.log
-StandardError=file:/home/pi/cockpit_output.log
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
