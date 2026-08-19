@@ -22,6 +22,10 @@ body.rov-menu-open::after { content: ""; position: fixed; z-index: 38; inset: 0;
 .rov-battery--low { color: #ffc107; }
 .rov-battery--critical { color: #ff5252; }
 .rov-battery--unavailable { color: #b8bec8; }
+.rov-hud__heading [data-heading-scale] { position: relative; display: block; height: 2rem; overflow: hidden; white-space: nowrap; }
+.rov-hud__heading [data-heading-scale] span { position: absolute; top: 0; left: 50%; min-width: 2.4rem; height: 1.5rem; transform-origin: center; transition: transform .12s linear, opacity .12s linear; text-align: center; }
+.rov-hud__heading [data-heading-scale] span i { display: block; height: .45rem; border-left: 1px solid var(--hud-line); margin: 0 auto .15rem; }
+.rov-hud__heading [data-heading-scale] span.cardinal i { height: .75rem; border-left-width: 2px; }
 .card { padding: var(--rov-panel-gap); border: 1px solid var(--rov-panel-border); border-radius: var(--rov-panel-radius); background: var(--rov-panel-background); }
 .form-control { width: 100%; } .btn { display: inline-block; width: auto; } .table-responsive { overflow-x: auto; }
 .instrument-style-editor { position: fixed; z-index: 30; top: 5rem; right: 1rem; pointer-events: auto; color: #fff; }
