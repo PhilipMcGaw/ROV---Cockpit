@@ -18,7 +18,7 @@ getconf LONG_BIT
 
 Expected baseline: `aarch64`, Raspberry Pi OS Bookworm, and `64`.
 
-On Linux, the documented default development location is `~/robots/ROV---Cockpit`, beside the other ROV repositories. On macOS, use a user-selected workspace beneath the home directory, for example `~/Projects/ROV/ROV---Cockpit`. Raspberry Pi production deployment uses `/home/pi/ROV---Cockpit` in the current service files. Scripts derive paths from their own location and do not require these locations to be hard-coded.
+On Linux, the documented default development location is `~/robots/ROV---Cockpit`, beside the other ROV repositories. On macOS, use a user-selected workspace beneath the home directory, for example `~/Projects/ROV/ROV---Cockpit`. Raspberry Pi provisioning renders the installed systemd and Nginx files using the actual repository locations and runtime account; no `/home/pi` checkout path is required.
 
 ## One-time installation
 
@@ -49,7 +49,19 @@ HiL/SiL normally remains on the development workstation or VM rather than on the
 ~/robots/ROV---HiL-and-SiL/
 ```
 
-The Cockpit provisioning script can find Control and Datalogger automatically when they are beside Cockpit. Use `CONTROL_ROOT` or `DATALOGGER_ROOT` if either repository is stored elsewhere. The provisioning path installs all three virtual environments, installs the Control, Cockpit, and Datalogger systemd units, configures the shared CSV directory, and invokes Control's networking deployment. The service files currently use the `pi` runtime account and the standard `/home/pi/ROV---...` layout.
+The Cockpit provisioning script can find Control and Datalogger automatically when they are beside Cockpit. Use `CONTROL_ROOT` or `DATALOGGER_ROOT` if either repository is stored elsewhere. The provisioning path installs all three virtual environments, renders the Control, Cockpit, and Datalogger systemd units for the invoking runtime account and actual checkout locations, configures shared media/CSV directories, and invokes Control's networking deployment.
+
+Before provisioning, create the ignored Control deployment files and replace every placeholder credential:
+
+```zsh
+cd ~/robots/ROV---Control
+cp configs/network.env.example configs/network.env
+cp configs/network.secrets.example configs/network.secrets.env
+cp configs/nats.env.example configs/nats.env
+chmod 600 configs/network.secrets.env
+```
+
+`network.secrets.env` contains Wi-Fi, hotspot, SMB, and NATS credentials. `nats.env` controls whether NATS listens only on loopback (the default) or is accessible to an explicitly trusted HiL/SiL network. Neither file is committed.
 
 From the repository root on the target machine:
 
@@ -58,13 +70,13 @@ chmod +x scripts/*.sh
 sudo bash scripts/0_provision_raspberry_pi.sh
 ```
 
-The provisioning script is the initial Raspberry Pi setup path. It installs Python, Node.js/npm, Nginx, Motion, curl, certificates, and NATS Server from the configured Debian repositories; creates the Cockpit, Control, and Datalogger virtual environments; installs the shared robot profile at `/etc/robot/profile.json`; installs the Control, Cockpit, and Datalogger systemd units; enables the services; applies the Nginx configuration; and invokes Control's networking deployment for NetworkManager, SMB, Avahi, hostname, and fallback-network configuration. It requires `sudo` because it changes system packages and services. It does not physically validate cameras, sensors, motor controllers, or the ROV data link.
+The provisioning script is the initial Raspberry Pi setup path. It installs Python, Node.js/npm, Nginx, Motion, curl, certificates, NATS Server, NetworkManager, its `dnsmasq` shared-network dependency, Avahi, and Samba from the configured Debian repositories; creates the Cockpit, Control, and Datalogger virtual environments; creates the shared `stills/`, `videos/`, and `data/csv/` directories; installs the shared robot profile at `/etc/robot/profile.json`; renders the Control, Cockpit, Datalogger, Motion, and Nginx configuration for the actual checkout paths; enables the services; and invokes Control's network deployment. NATS uses the credentials from the ignored secrets file and binds to `127.0.0.1` unless `NATS_REMOTE_ACCESS=true` is configured. It requires `sudo` because it changes system packages and services. It does not physically validate cameras, sensors, motor controllers, network failover, or the ROV data link.
 
 The installed Control systemd unit grants only `CAP_SYS_TIME` for the profile-driven browser-time synchronisation feature. This allows Control, rather than Cockpit or the browser, to correct the RPi system clock. After deploying a changed Control unit, run `sudo systemctl daemon-reload` and restart Control when the robot is safe. A logged-in driver/admin Cockpit browser then provides UTC time immediately and every 60 seconds. This is not a replacement for NTP where a trusted network time service is available.
 
 The development sensor simulator is available at `/simulator/` but starts in a safe, disabled state. Set `COCKPIT_ENABLE_SIMULATOR=true` only for development or HiL/SiL deployments, never for a live robot. It injects values into Cockpit browser telemetry and does not replace NATS, Control, or physical sensor validation.
 
-Set `ROBOT_PROFILE` when provisioning a non-ROV robot, for example `ROBOT_PROFILE=k9 sudo bash scripts/0_provision_raspberry_pi.sh`. Set `CONTROL_ROOT` or `DATALOGGER_ROOT` when either sibling repository is not located beside Cockpit. The Control secrets file must already exist and have restrictive permissions before networking deployment is invoked.
+Set `ROBOT_PROFILE` when provisioning a non-ROV robot, for example `ROBOT_PROFILE=k9 sudo bash scripts/0_provision_raspberry_pi.sh`. Set `CONTROL_ROOT` or `DATALOGGER_ROOT` when either sibling repository is not located beside Cockpit. The Control network and NATS configuration files must already exist, and the secrets file must use mode `600`, before provisioning starts.
 
 If NATS Server is unavailable from the configured Debian repositories, provisioning stops before service configuration. Add a trusted, documented repository or use the approved NATS deployment procedure; do not substitute an unverified installer.
 
@@ -82,27 +94,27 @@ The Windows bootstrap is designed for machines where users do not have administr
 ./scripts/2_start_app.sh
 ```
 
-On Windows use `scripts\\2_start_app.bat`. On macOS, or on Linux without deployed systemd units, the shell script starts a local Uvicorn Cockpit server and opens the browser. On a deployed Raspberry Pi it restarts NATS Server, Motion, the Python control service, Cockpit, and Nginx; use that mode only when it is safe to interrupt the ROV.
+On Windows use `scripts\\2_start_app.bat`. On macOS, or on Linux without deployed systemd units, the shell script starts a local Uvicorn Cockpit server. On a deployed Raspberry Pi it rebuilds the frontend and restarts Motion, Cockpit, and Nginx; use that mode only when it is safe to interrupt the ROV. Use `systemctl restart python` or `systemctl restart datalogger` separately when those services need a safe restart.
 
 ## Services
 
 | Service | Unit/config | Role |
 |---|---|---|
-| Nginx | `configs/nginx.conf` | HTTP reverse proxy, static files, and camera stream proxy |
-| NATS Core | external ROV deployment | Inter-service messaging |
-| Datalogger | `configs/datalogger.service` | Change-only NATS telemetry logging and CSV export |
-| Motion | `configs/motion*.conf` | Camera streams |
-| Cockpit | `configs/cockpit.service` | FastAPI/Uvicorn web application |
+| Nginx | rendered from `configs/nginx.conf` | HTTP reverse proxy, static files, and camera stream proxy |
+| NATS Core | `/etc/nats/rov-nats.conf` | Authenticated inter-service messaging; optional trusted-network listener |
+| Datalogger | rendered from `configs/datalogger.service` | Change-only NATS telemetry logging and CSV export |
+| Motion | rendered from `configs/motion*.conf` | Camera streams |
+| Cockpit | rendered from `configs/cockpit.service` | FastAPI/Uvicorn web application |
 
 Camera inventory is stored in `configs/cameras.json`. The Cockpit `/cameras/` page edits this inventory. Motion configuration is stored in `configs/motion*.conf`; restart Motion after applying a matching configuration change.
 
-Cockpit media is stored below `MEDIA_ROOT` (default: `<project>/media`), with `stills/`, `videos/`, and `data/csv/` subdirectories. On the Raspberry Pi, Motion writes recordings to `/home/pi/ROV---Cockpit/media/videos`. `MEDIA_MIN_FREE_GB` defaults to 2 GB; the oldest recordings are removed when the free-space floor is reached. The default recording segment length is 30 minutes and is stored in `configs/media.json`.
+Cockpit media is stored below `MEDIA_ROOT` (default: `<project>/media`), with `stills/`, `videos/`, and `data/csv/` subdirectories. The provisioner creates these directories and renders Motion's recording path to `<Cockpit checkout>/media/videos`. `MEDIA_MIN_FREE_GB` defaults to 2 GB; the oldest recordings are removed when the free-space floor is reached. The default recording segment length is 30 minutes and is stored in `configs/media.json`.
 
 The Cockpit `/files/` page captures stills from the current Motion frame, displays the still gallery, lists recordings, and provides downloads. View-only access is anonymous. Driver/admin login and password management exist, but enforcement of control and every administrative route remains incomplete.
 
 ## Sensor CSV data
 
-The Cockpit `/data/` page displays CSV exports stored below `CSV_ROOT` (default: `<Cockpit project>/data/csv`). It discovers the CSV headers as selectable sensor fields, displays a bounded preview of up to 250 rows, and downloads a new CSV containing all rows for the selected fields. The original CSV is never modified. The standard robot deployment sets `CSV_ROOT` to `/home/pi/ROV---Cockpit/media/data/csv`, where Datalogger writes `telemetry.csv` and the SMB `media` share exposes the same directory. This page reads CSV exports; it does not itself create the Datalogger records.
+The Cockpit `/data/` page displays CSV exports stored below `CSV_ROOT` (default: `<Cockpit project>/data/csv`). It discovers the CSV headers as selectable sensor fields, displays a bounded preview of up to 250 rows, and downloads a new CSV containing all rows for the selected fields. The original CSV is never modified. The standard robot deployment renders `CSV_ROOT` to `<Cockpit checkout>/media/data/csv`, where Datalogger writes `telemetry.csv` and the SMB `media` share exposes the same directory. This page reads CSV exports; it does not itself create the Datalogger records.
 
 ## Configure Nginx as the Raspberry Pi reverse proxy
 
@@ -113,29 +125,13 @@ sudo apt update
 sudo apt install -y nginx
 ```
 
-From the Cockpit repository, validate the configuration before enabling it:
-
-```bash
-sudo nginx -t -c "$PWD/configs/nginx.conf"
-```
-
-Install the Cockpit configuration as the default site. The configuration assumes the Cockpit repository is at `/home/pi/ROV---Cockpit`, Uvicorn listens on `127.0.0.1:8080`, and Motion provides camera streams on ports `8001` and `8002`:
-
-```bash
-sudo cp configs/nginx.conf /etc/nginx/sites-available/rov-cockpit
-sudo ln -sfn /etc/nginx/sites-available/rov-cockpit /etc/nginx/sites-enabled/default
-sudo nginx -t
-sudo systemctl enable nginx
-sudo systemctl restart nginx
-```
-
-The repeatable configuration helper is:
+The repeatable configuration helper renders the checkout path before it validates and installs the site:
 
 ```bash
 sudo bash scripts/3_configure_nginx.sh
 ```
 
-Run it from the Cockpit repository or provide the script’s absolute path. It creates the Nginx map-cache directory, backs up an existing Cockpit site configuration before replacement, validates Nginx, enables the site, reloads Nginx, and restarts Cockpit. It requires `sudo` because Nginx and systemd are system services; it does not alter shell PATH, the registry, or unrelated user data.
+Run it from the Cockpit repository or provide the script’s absolute path. It creates the Nginx map-cache directory, renders the actual Cockpit checkout path, backs up an existing Cockpit site configuration before replacement, validates Nginx, enables the site, reloads Nginx, and restarts Cockpit. It requires `sudo` because Nginx and systemd are system services; it does not alter shell PATH, the registry, or unrelated user data.
 
 The operator interface is then available at the Raspberry Pi address on HTTP port `80`. Nginx owns browser caching for `/static/`; the Python application does not need to emit no-cache headers for static assets.
 
@@ -149,23 +145,13 @@ For deployments using a mobile data link, set `MAP_TILE_PROXY=true` in the Cockp
 
 To roll back, restore the previous site file, run `sudo nginx -t`, and restart Nginx. Do not expose Uvicorn directly to the LAN when Nginx is intended to be the reverse proxy.
 
-## Install/update
-
-From the repository's `Configs` directory on the Pi:
-
-```bash
-sudo bash setup.sh
-```
-
-The script copies configuration files into system locations, reloads systemd, and enables/restarts the Python and Cockpit services. Review the script before running it on a new image because it assumes existing packages, users, paths, and permissions.
-
 ## First checks
 
 ```bash
-systemctl status nginx motion cockpit
+systemctl status nats-server nginx motion python cockpit datalogger
 curl http://127.0.0.1/
 curl http://127.0.0.1:8080/json/
-nats sub ">"
+nmcli device status
 ```
 
-The NATS configuration must be restricted before exposing the server beyond the trusted ROV network. Confirm the configured authorisation model before deployment.
+For NATS diagnostics, use an authenticated client URL from the restricted `/etc/robot/nats.env` file; do not expose that file or credentials in shell history. Confirm the configured authorisation model before enabling `NATS_REMOTE_ACCESS`.
