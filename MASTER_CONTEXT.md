@@ -2281,7 +2281,7 @@ robot profile explicitly into every page context, so these shared templates
 can safely use the profile identity without relying on mutable Jinja globals.
 The shared header is a compact translucent operator shell: it contains the ROV
 identity, a status/alert surface, battery percentage, voltage, a browser-local
-24-hour clock with a 1 Hz flashing colon, and a `Link` indicator for the Cockpit browser WebSocket. Navigation is
+24-hour clock with a 1 Hz flashing colon, and a `Link` indicator for the Cockpit browser WebSocket. The central alert surface obtains read-only state from `/api/system/status`: `Simulation mode` takes precedence, `NATS offline` is displayed while the server-side NATS client is disconnected, and `No recent alerts.` is used otherwise. Navigation is
 provided through its hamburger-triggered translucent popover. The hamburger button remains geometrically centred while its three-bar glyph has a small independent downward optical adjustment to align it with the otter/ROV identity lock-up without changing the hit area. `Link` is not a
 claim of NATS broker health. The shared header does not show temperature,
 heading, depth, or uptime; these remain in the appropriate live HUD and

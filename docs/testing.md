@@ -29,6 +29,9 @@ nats sub system.uptime --count=1
 
 Also verify `/ws/telemetry` in the browser, `/api/session` before and after login, anonymous view-only access, and Login/logout navigation state.
 
+With NATS stopped, confirm that the central header status becomes `NATS offline`.
+On `/simulator/`, enable simulation and confirm that the same surface changes immediately to `Simulation mode`; disable it and confirm that the status returns to the current NATS state.
+
 ## 3. Serial protocol test
 
 Connect the Cockpit to a test NATS server with actuators disabled. Confirm that telemetry is displayed, malformed payloads do not crash the web service, and browser WebSocket reconnect behaviour is visible.

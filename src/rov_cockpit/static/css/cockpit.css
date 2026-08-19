@@ -70,6 +70,8 @@ html { overflow:auto; } body { position:static; inset:auto; min-height:100%; ove
 
 .rov-hud__heading [data-heading-scale] span { color:var(--hud-text); text-shadow:0 1px 3px rgba(0,0,0,.9); }
 .rov-hud__heading [data-heading-scale] .cardinal { color:var(--hud-text); }
+.rov-status-bar__alert[data-status="nats-offline"] { color:#ffd0d0; background:rgba(118,26,31,.68); }
+.rov-status-bar__alert[data-status="simulation"] { color:#ffe0a3; background:rgba(118,76,14,.68); }
 .rov-hud__heading [data-heading-scale] { height:2.65rem; }
 .rov-hud__heading [data-heading-scale] span.major i { height:.62rem; }
 .rov-hud__heading [data-heading-scale] span.north i { height:.75rem; border-left-width:2px; }

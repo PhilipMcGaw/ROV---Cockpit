@@ -31,10 +31,46 @@ const mountVueInstruments = (): void => {
   if (liveDock) mountVueStatusInstrument(liveDock, RovLiveDockVue);
 };
 
+type CockpitSystemStatus = {
+  nats_connected: boolean;
+  simulation_enabled: boolean;
+};
+
+const startOperatorStatus = (): void => {
+  const alert = document.querySelector<HTMLElement>("[data-cockpit-alert]");
+  if (!alert) return;
+
+  const show = (message: string, state: "normal" | "nats-offline" | "simulation"): void => {
+    alert.textContent = message;
+    alert.dataset.status = state;
+  };
+  const refresh = async (): Promise<void> => {
+    try {
+      const response = await fetch("/api/system/status", { cache: "no-store" });
+      if (!response.ok) throw new Error(`Status request failed: ${response.status}`);
+      const status = await response.json() as CockpitSystemStatus;
+      if (status.simulation_enabled) {
+        show("Simulation mode", "simulation");
+      } else if (!status.nats_connected) {
+        show("NATS offline", "nats-offline");
+      } else {
+        show("No recent alerts.", "normal");
+      }
+    } catch {
+      show("NATS offline", "nats-offline");
+    }
+  };
+
+  void refresh();
+  window.setInterval(() => { void refresh(); }, 5_000);
+  window.addEventListener("cockpit-system-status-changed", () => { void refresh(); });
+};
+
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => { cockpitTelemetrySocket.start(); mountVueInstruments(); }, { once: true });
+  document.addEventListener("DOMContentLoaded", () => { cockpitTelemetrySocket.start(); mountVueInstruments(); startOperatorStatus(); }, { once: true });
 } else {
   cockpitTelemetrySocket.start();
   mountVueInstruments();
+  startOperatorStatus();
 }
 

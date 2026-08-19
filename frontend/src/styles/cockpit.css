@@ -129,6 +129,8 @@ body:not(.rov-live-page) main { margin-top: var(--rov-topbar-height); }
 .rov-menu-toggle:hover, .rov-menu-toggle:focus-visible { border-color: var(--rov-shell-border); background: rgba(255, 255, 255, .1); outline: none; }
 .rov-status-bar__identity { display: inline-flex; align-items: center; gap: .55rem; color: inherit; font-size: 1.18rem; font-weight: 700; letter-spacing: .02em; text-decoration: none; }
 .rov-status-bar__alert { justify-self: center; width: min(100%, 34rem); margin: 0; padding: .45rem .85rem; overflow: hidden; border-radius: .45rem; color: var(--rov-shell-text); background: rgba(5, 13, 26, .58); font-size: .9rem; font-weight: 650; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.rov-status-bar__alert[data-status="nats-offline"] { color: #ffd0d0; background: rgba(118, 26, 31, .68); }
+.rov-status-bar__alert[data-status="simulation"] { color: #ffe0a3; background: rgba(118, 76, 14, .68); }
 .rov-status-bar__system { display: flex; align-items: center; justify-content: flex-end; gap: clamp(.55rem, 1vw, 1rem); font-size: .83rem; }
 .rov-status-bar__clock { display: inline-flex; align-items: baseline; color: var(--rov-shell-muted); font-family: inherit; font-size: inherit; font-weight: inherit; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rov-status-bar__clock-colon { display: inline-block; animation: rov-clock-colon-blink 1s steps(1, end) infinite; }

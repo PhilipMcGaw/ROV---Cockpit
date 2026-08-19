@@ -612,6 +612,16 @@ async def network_ping() -> dict[str, int]:
     return {"ok": 1}
 
 
+@app.get("/api/system/status")
+async def system_status(request: Request) -> dict[str, bool]:
+    """Expose read-only operating state for the shared operator status surface."""
+    client = getattr(request.app.state, "nats_client", None)
+    return {
+        "nats_connected": bool(client is not None and getattr(client, "is_connected", False)),
+        "simulation_enabled": simulation_enabled,
+    }
+
+
 @app.websocket("/ws/telemetry")
 async def telemetry_socket(websocket: WebSocket):
     """Provide NATS telemetry to browsers without exposing NATS directly."""

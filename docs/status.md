@@ -12,6 +12,7 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - Independent `<rov-depth>` Web Component consuming shared cockpit state.
 - Vue-rendered battery status instrument consuming shared cockpit state.
 - Shared translucent operator shell on every page: compact status bar, browser-WebSocket link indicator, 24-hour local clock with a 1 Hz flashing colon, and a hamburger-triggered navigation popover.
+- The central shared-header status shows `Simulation mode` while simulation is enabled, `NATS offline` when the server-side NATS client is disconnected, and `No recent alerts.` otherwise.
 - Collapsible left-hand live-view diagnostics tray. It currently holds the read-only estimated browser-to-Cockpit network transfer rate and leaves the primary flight display uncluttered.
 - Vue-rendered live-view bottom dock presenting the selected camera and live depth, heading, roll, pitch, primary-light percentage, camera tilt, and water temperature without sending control commands.
 - The HUD depth scale retains only its graduations and centre read-off line; live numeric depth is presented once in the bottom dock.
