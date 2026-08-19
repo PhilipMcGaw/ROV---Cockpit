@@ -13,6 +13,7 @@ info() { echo "[INFO] $*"; }
 pass() { echo "[PASS] $*"; }
 warn() { echo "[WARN] $*"; }
 fail() { echo "[FAIL] $*" >&2; exit 1; }
+escape_sed_replacement() { printf '%s' "$1" | sed 's/[\\&|]/\\&/g'; }
 
 echo "[INFO] ROV Cockpit Nginx configuration"
 echo "[INFO] Project version: unversioned; see MASTER_CONTEXT.md"
@@ -40,7 +41,11 @@ if sudo test -e "$SITE_AVAILABLE"; then
 fi
 
 info "Installing the Cockpit Nginx site configuration."
-sudo install -o root -g root -m 0644 "$NGINX_SOURCE" "$SITE_AVAILABLE" || fail "Could not install $SITE_AVAILABLE. Check sudo permissions."
+RENDERED_SITE="$(mktemp)"
+trap 'rm -f "$RENDERED_SITE"' EXIT
+COCKPIT_ROOT_ESCAPED="$(escape_sed_replacement "$PROJECT_ROOT")"
+sed "s|@COCKPIT_ROOT@|$COCKPIT_ROOT_ESCAPED|g" "$NGINX_SOURCE" > "$RENDERED_SITE"
+sudo install -o root -g root -m 0644 "$RENDERED_SITE" "$SITE_AVAILABLE" || fail "Could not install $SITE_AVAILABLE. Check sudo permissions."
 sudo ln -sfn "$SITE_AVAILABLE" "$SITE_ENABLED" || fail "Could not enable $SITE_ENABLED."
 pass "Cockpit Nginx site installed and enabled."
 
