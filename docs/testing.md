@@ -6,6 +6,7 @@ Run tests in increasing order of risk. Record the date, software revision, hardw
 
 ```bash
 python -m py_compile src/rov_cockpit/app.py src/rov_cockpit/auth.py
+python tests/test_status_instruments.py
 ```
 
 Confirm that the changed KiCad files open without recovery warnings and that firmware compiles for the selected board.

@@ -21,7 +21,7 @@ export const RovBatteryVue = defineComponent({
         onBeforeUnmount(() => unsubscribe?.());
         return () => {
             if (value.value === null || !Number.isFinite(Number(value.value)))
-                return h("div", { class: ["rov-instrument", "rov-instrument--unavailable", "rov-battery"], role: "status", "aria-live": "polite" }, [h("i", { class: "fa-solid fa-battery-empty", "aria-hidden": "true" }), h("span", { class: "rov-instrument__value" }, "Unavailable")]);
+                return h("div", { class: ["rov-instrument", "rov-instrument--unavailable", "rov-battery"], role: "status", "aria-live": "polite" }, [h("i", { class: "fa-solid fa-battery-empty", "aria-hidden": "true" }), h("span", { class: "rov-instrument__value" }, "-- %")]);
             const raw = Number(value.value);
             // Robot battery telemetry is strictly a percentage in the 0–100 range.
             const clamped = Math.max(0, Math.min(100, Math.round(raw)));

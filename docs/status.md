@@ -15,7 +15,7 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - Collapsible left-hand live-view diagnostics tray. It currently holds the read-only estimated browser-to-Cockpit network transfer rate and leaves the primary flight display uncluttered.
 - Vue-rendered live-view bottom dock presenting the selected camera and live depth, heading, roll, pitch, primary-light percentage, camera tilt, and water temperature without sending control commands.
 - The HUD depth scale retains only its graduations and centre read-off line; live numeric depth is presented once in the bottom dock.
-- Battery-percentage contract enforced as numeric `0–100` percent; legacy `0–10` and `0–1` scaling is not supported.
+- Battery-percentage contract enforced as numeric `0–100` percent; legacy `0–10` and `0–1` scaling is not supported. Missing or invalid percentage telemetry uses the empty battery icon and `-- %` placeholder.
 - Independent `<rov-network-status>` and `<rov-depth>` Web Components consuming shared cockpit state until their Vue ports are completed.
 - ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay. This is the intended navigation instrument for the ROV cockpit.
 - The former standalone heading band and depth meter have been removed; heading and depth are rendered only within the combined HUD.
