@@ -4,9 +4,9 @@
     <i class="fa-solid fa-bars" aria-hidden="true"></i>
   </button>
 
-  <a class="rov-status-bar__identity" href="/" aria-label="ROV live view">
-    <i class="fa-solid fa-otter" aria-hidden="true"></i>
-    <span>ROV</span>
+  <a class="rov-status-bar__identity" href="/" aria-label="{{ active_robot_profile.display_name }} live view">
+    <i class="fa-solid {{ active_robot_profile.identity_icon }}" aria-hidden="true"></i>
+    <span>{{ active_robot_profile.display_name }}</span>
   </a>
 
   <p class="rov-status-bar__alert" role="status">No recent alerts.</p>

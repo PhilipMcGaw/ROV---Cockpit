@@ -23,6 +23,8 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - Reusable HUD style editor with live colour and line-thickness controls; settings currently persist in browser local storage.
 - Development sensor simulator page with runtime enable/disable control and slider-driven browser telemetry injection.
 - Profile-driven browser-assisted time relay: an authenticated driver/admin page publishes UTC Unix milliseconds to the active profile's Cockpit NATS subject on load and every 60 seconds; Control remains the sole service permitted to alter the RPi clock.
+- K9/profile-enabled right-edge soundboard drawer. It displays the active profile's sound labels and lets an authenticated driver or administrator publish the validated selected ID to the profile-owned `sound.play` NATS command. ROV and PiWars profiles do not render this drawer.
+- Canonical Raspberry Pi provisioning for the co-installed Cockpit, Control, and Datalogger services. It renders service, Motion, and Nginx templates for the actual checkout paths; installs authenticated NATS configuration; invokes Control-owned network, SMB, and Avahi deployment; and creates the shared media/CSV directories.
 - Existing instruments, camera handling, media capture/download, CSV access, authentication, and Gamepad API support remain part of the application.
 
 ## Automated-test verification
@@ -44,6 +46,8 @@ The current repository state is not recorded as bench-tested or production-valid
 - Reproducible TypeScript generation in every supported development environment.
 - Complete production authentication and authorisation hardening.
 - Raspberry Pi bench validation of browser-assisted clock synchronisation, including the deployed `CAP_SYS_TIME` systemd capability and NATS status result.
+- Raspberry Pi bench validation of the canonical provisioner, NATS service override, Wi-Fi/hotspot failover, SMB share, Motion camera configuration, and co-installed service restart behaviour.
+- Control-side K9 sound-file resolution and speaker playback. The Cockpit drawer publishes the logical request, but it does not yet prove that a robot sound was produced.
 
 ## Important references
 
@@ -60,5 +64,7 @@ The current repository state is not recorded as bench-tested or production-valid
 - `src/rov_cockpit/static/dist/main.js`
 - `src/rov_cockpit/static/dist/components/rov-depth.js`
 - `configs/nats.env.example`
+- `scripts/0_provision_raspberry_pi.sh`
+- `tests/test_k9_soundboard.py`
 - `scripts/1_install_dependencies.bat`
 - `scripts/2_start_app.bat`

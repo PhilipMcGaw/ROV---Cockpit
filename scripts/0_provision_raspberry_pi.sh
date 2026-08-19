@@ -107,6 +107,8 @@ echo "[INFO] Privileged actions: apt package installation, systemd service insta
 [[ -r "$NATS_CONFIG_FILE" ]] || fail "NATS configuration is missing: $NATS_CONFIG_FILE. Copy configs/nats.env.example to configs/nats.env and review it."
 [[ -r "$NETWORK_CONFIG_FILE" ]] || fail "Network configuration is missing: $NETWORK_CONFIG_FILE. Copy configs/network.env.example to configs/network.env and review it."
 [[ -r "$NETWORK_SECRETS_FILE" ]] || fail "Network/NATS secrets are missing: $NETWORK_SECRETS_FILE. Copy configs/network.secrets.example to configs/network.secrets.env, set values, and use mode 600."
+NETWORK_SECRETS_MODE="$(stat -c '%a' "$NETWORK_SECRETS_FILE")"
+[[ "$NETWORK_SECRETS_MODE" == 600 || "$NETWORK_SECRETS_MODE" == 400 ]] || fail "Network/NATS secrets must have mode 600 or 400 before provisioning (found $NETWORK_SECRETS_MODE)."
 command -v apt-get >/dev/null 2>&1 || fail "apt-get is unavailable. This script supports Debian-based Raspberry Pi operating systems only."
 
 info "Refreshing Debian package metadata."

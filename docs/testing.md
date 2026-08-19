@@ -61,6 +61,19 @@ Perform this only on a development RPi with propulsion disabled. Install the act
 ## Live diagnostics tray test
 
 Open the live Cockpit page and use the left-edge diagnostics tab. Confirm that the tray expands between the top status bar and lower dock, displays estimated browser-to-Cockpit upload and download rates, and closes using its close control. The rate is diagnostic-only: it must not claim robot network health, alter Control behaviour, or overlap the primary HUD or command dock.
+
+## K9 soundboard drawer test
+
+On a development system, start Cockpit with `ROBOT_PROFILE=k9` and use a test
+NATS server with no live actuator hardware. Confirm that the right-edge
+soundboard tab is present, lists the three K9 profile sound labels, and opens
+and closes without affecting the diagnostics tray. Confirm that a viewer sees
+disabled buttons, then sign in as a driver or administrator. Select one sound
+and verify exactly one message on `k9.command.sound.play` with its configured
+sound ID as `value`, the profile ID `k9`, and source
+`cockpit-sound-drawer`. An accepted Cockpit request does not demonstrate audio
+playback: record separate Control and speaker bench evidence before claiming
+that a K9 sound was heard.
 # Documentation currency audit
 
 Run `python tests/test_documentation.py` before submitting changes. The check is intentionally independent of application dependencies so that documentation drift can be detected on a clean or locked-down workstation. CI runs the same command.

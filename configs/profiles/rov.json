@@ -2,6 +2,7 @@
   "schema_version": 1,
   "profile_id": "rov",
   "display_name": "ROV",
+  "identity_icon": "fa-otter",
   "profile_status": "physical-hardware-profile",
   "namespace": "rov",
   "transport": {

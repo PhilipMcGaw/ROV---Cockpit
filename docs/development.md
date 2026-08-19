@@ -92,6 +92,16 @@ The Cockpit NATS connection uses `NATS_URL` and `NATS_SUBJECT`, defaulting to `n
 
 The active robot profile is loaded once at Cockpit start-up. Production uses `/etc/robot/profile.json`; local development falls back to `configs/profiles/$ROBOT_PROFILE.json` when the deployed file is absent. When its `time_synchronisation` object is enabled, an authenticated `driver` or `admin` browser page sends its UTC time to `POST /api/system/time-sync` on page load and every 60 seconds. Cockpit validates and relays a JSON message over the profile-defined NATS subject; it does not set the host clock itself.
 
+When the active profile enables `soundboard`, the live page adds a translucent
+right-edge soundboard drawer modelled on the diagnostics tray. K9 currently
+enables it. The drawer lists only the profile-defined labels and sends an
+authenticated `driver` or `admin` selection to `POST /api/soundboard/play`.
+Cockpit validates the selected ID and publishes it as `value` on the
+profile-defined `<namespace>.command.sound.play` subject; it does not expose or
+play the sound file in the browser. Control must resolve the ID to the
+profile-defined sound file and operate the speaker hardware. Control-side
+playback remains planned and unbench-tested.
+
 The payload uses UTC Unix time in milliseconds and the active profile identity. Control validates the message, then applies it only on Linux with `CAP_SYS_TIME`. A viewer session cannot request clock changes. This is intended to correct an RPi without an RTC after it gains Cockpit access; it is not an NTP replacement and has not yet been bench-tested on an RPi.
 
 The TypeScript telemetry layer is authored under `frontend/src/` and emits browser state from `/ws/telemetry` into `window.rovCockpitTelemetry`. Vue 3 is now an approved frontend dependency. The migration is incremental: the battery status instrument is now rendered by Vue from `frontend/src/vue/status-instruments.ts`; the existing `<rov-hud>` remains the compatibility renderer until the HUD is ported. The browser module import map resolves Vue to the committed `static/dist/vendor/vue.runtime.esm-browser.prod.js` asset so the no-bundler TypeScript build can run on the robot. Depth, network status, style editing, and simulator surfaces remain staged for migration. NATS logic remains exclusively in FastAPI.

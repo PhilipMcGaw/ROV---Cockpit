@@ -14,7 +14,7 @@ Profiles shall be loaded and validated during system boot before Cockpit, Contro
 
 ## Profile format and scope
 
-At present, robot profiles shall live in the Cockpit repository under `configs/profiles/`. The Cockpit repository is the source of truth for the profile files. The active profile shall be made available to Control and Datalogger through the robot deployment path without creating independently edited copies. All robot profiles shall use the same JSON format and schema. The profile shall be validated before activation and shall include a schema version. Profiles may define robot identity, branding, enabled capabilities, namespaced telemetry and logical command subjects, SI units, raw-value scaling, display precision, unavailable-value behaviour, dashboard layout, cameras, media, and operator input mappings.
+At present, robot profiles shall live in the Cockpit repository under `configs/profiles/`. The Cockpit repository is the source of truth for the profile files. The active profile shall be made available to Control and Datalogger through the robot deployment path without creating independently edited copies. All robot profiles shall use the same JSON format and schema. The profile shall be validated before activation and shall include a schema version. Profiles may define robot identity, an `identity_icon` from the approved Font Awesome `fa-*` icon class set, branding, enabled capabilities, namespaced telemetry and logical command subjects, SI units, raw-value scaling, display precision, unavailable-value behaviour, dashboard layout, cameras, media, and operator input mappings.
 
 On the Raspberry Pi, the active profile shall be installed at a shared deployment path, initially `/etc/robot/profile.json`. Cockpit, Control, and Datalogger shall all read this same file at boot.
 
@@ -64,7 +64,7 @@ During development, reproducible test credentials may be committed to Git to mak
 
 ## Example profiles
 
-The framework shall provide functional ROV, K9, and PiWars profiles. K9 shall include its optional soundboard capability. PiWars shall support configurable competition-oriented controls and sensors. Where physical hardware is not yet available, the examples shall run against mock or simulated Controller behaviour and shall label unverified or planned capabilities explicitly.
+The framework shall provide functional ROV, K9, and PiWars profiles. K9 shall include its optional soundboard capability, a `sound.play` command on `<namespace>.command.sound.play`, and a soundboard list of stable IDs, operator labels, and Control-resolved file names. Cockpit shall expose this list only through a K9/profile-enabled drawer and shall publish an authenticated selected ID; it shall not control speaker hardware or serve the sound files. PiWars shall support configurable competition-oriented controls and sensors. Where physical hardware is not yet available, the examples shall run against mock or simulated Controller behaviour and shall label unverified or planned capabilities explicitly.
 
 ## Consistency and maintenance
 

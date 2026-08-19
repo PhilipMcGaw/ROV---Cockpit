@@ -61,7 +61,7 @@ cp configs/nats.env.example configs/nats.env
 chmod 600 configs/network.secrets.env
 ```
 
-`network.secrets.env` contains Wi-Fi, hotspot, SMB, and NATS credentials. `nats.env` controls whether NATS listens only on loopback (the default) or is accessible to an explicitly trusted HiL/SiL network. Neither file is committed.
+`network.secrets.env` contains Wi-Fi, hotspot, SMB, and NATS credentials. It MUST have mode `600` or `400` before provisioning. `nats.env` controls whether NATS listens only on loopback (the default) or is accessible to an explicitly trusted HiL/SiL network. Neither file is committed.
 
 From the repository root on the target machine:
 

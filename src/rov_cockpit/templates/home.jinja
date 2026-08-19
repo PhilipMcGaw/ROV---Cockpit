@@ -1,6 +1,6 @@
 {% extends "base.jinja" %}
-{% block title %}home — ROV{% endblock %}
-{% block body_class %}rov-live-page{% endblock %}
+{% block title %}home — {{ active_robot_profile.display_name }}{% endblock %}
+{% block body_class %}rov-live-page{% if active_robot_profile.profile_id != "rov" %} rov-live-page--profile-minimal{% endif %}{% endblock %}
 {% block content %}
 <!-- Main area -->
 
@@ -32,6 +32,29 @@
         </button>
     </aside>
 
+    {% if soundboard %}
+    <aside class="rov-soundboard-drawer" aria-label="{{ active_robot_profile.display_name }} soundboard">
+        <section class="rov-soundboard-drawer__panel" id="soundboard-drawer" hidden>
+            <header class="rov-soundboard-drawer__header">
+                <h2><i class="fa-solid fa-volume-high" aria-hidden="true"></i> {{ active_robot_profile.display_name }} sounds</h2>
+                <button class="rov-soundboard-drawer__close" type="button" data-soundboard-close aria-label="Close soundboard"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </header>
+            <p class="rov-soundboard-drawer__hint" data-soundboard-hint>Sign in as a driver or administrator to play a sound.</p>
+            <div class="rov-soundboard-drawer__sounds" aria-label="Available sounds">
+                {% for sound in soundboard.sounds %}
+                <button type="button" class="rov-soundboard-drawer__sound" data-sound-id="{{ sound.id }}" disabled>
+                    <i class="fa-solid fa-play" aria-hidden="true"></i><span>{{ sound.label }}</span>
+                </button>
+                {% endfor %}
+            </div>
+            <p class="rov-soundboard-drawer__status" data-soundboard-status role="status" aria-live="polite"></p>
+        </section>
+        <button class="rov-soundboard-drawer__toggle" type="button" data-soundboard-toggle aria-expanded="false" aria-controls="soundboard-drawer" title="Open soundboard">
+            <i class="fa-solid fa-volume-high" aria-hidden="true"></i><span class="visually-hidden">Open soundboard</span>
+        </button>
+    </aside>
+    {% endif %}
+
     <!-- The TypeScript build emits ES modules; map Vue to the committed runtime vendor asset. -->
     
     
@@ -48,9 +71,11 @@
     </div>
 -->
 
+    {% if active_robot_profile.profile_id == "rov" %}
     <rov-hud id="rov-hud" aria-label="ROV navigation HUD"></rov-hud>
     <rov-instrument-style-editor target="rov-hud" profile="rov"></rov-instrument-style-editor>
     <div data-vue-instrument="live-dock"></div>
+    {% endif %}
 
     <!-- End your project here-->
 
@@ -102,6 +127,57 @@
             measure().catch(() => {});
         })();
     </script>
+{% if soundboard %}
+<script>
+        (() => {
+            const toggle = document.querySelector('[data-soundboard-toggle]');
+            const close = document.querySelector('[data-soundboard-close]');
+            const panel = document.getElementById('soundboard-drawer');
+            const buttons = [...document.querySelectorAll('[data-sound-id]')];
+            const hint = document.querySelector('[data-soundboard-hint]');
+            const status = document.querySelector('[data-soundboard-status]');
+            const setOpen = open => {
+                if (!toggle || !panel) return;
+                panel.hidden = !open;
+                toggle.setAttribute('aria-expanded', String(open));
+            };
+            const setStatus = message => { if (status) status.textContent = message; };
+            toggle?.addEventListener('click', () => setOpen(panel?.hidden));
+            close?.addEventListener('click', () => setOpen(false));
+
+            fetch('/api/session', {cache: 'no-store', credentials: 'same-origin'}).then(response => response.json()).then(session => {
+                const permitted = session.authenticated && ['driver', 'admin'].includes(session.role);
+                buttons.forEach(button => { button.disabled = !permitted; });
+                if (hint) hint.hidden = permitted;
+            }).catch(() => setStatus('Soundboard availability could not be checked.'));
+
+            buttons.forEach(button => button.addEventListener('click', async () => {
+                const soundId = button.dataset.soundId;
+                if (!soundId) return;
+                buttons.forEach(item => { item.disabled = true; });
+                setStatus('Sending sound command…');
+                try {
+                    const response = await fetch('/api/soundboard/play', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        credentials: 'same-origin',
+                        body: JSON.stringify({sound_id: soundId}),
+                    });
+                    const result = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(result.detail || 'Sound command was rejected.');
+                    setStatus(`${result.label} requested.`);
+                } catch (error) {
+                    setStatus(error instanceof Error ? error.message : 'Sound command failed.');
+                } finally {
+                    fetch('/api/session', {cache: 'no-store', credentials: 'same-origin'}).then(response => response.json()).then(session => {
+                        const permitted = session.authenticated && ['driver', 'admin'].includes(session.role);
+                        buttons.forEach(item => { item.disabled = !permitted; });
+                    }).catch(() => {});
+                }
+            }));
+        })();
+    </script>
+{% endif %}
 <script>
         (() => {
             const camera = document.getElementById('mainCamera');

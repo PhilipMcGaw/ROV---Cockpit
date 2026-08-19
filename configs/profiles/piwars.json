@@ -2,6 +2,7 @@
   "schema_version": 1,
   "profile_id": "piwars",
   "display_name": "PiWars Robot",
+  "identity_icon": "fa-robot",
   "profile_status": "functional-example",
   "namespace": "piwars",
   "transport": { "nats_subject_prefix": "piwars." },

@@ -97,10 +97,48 @@ class ActiveRobotTimeProfile(BaseModel):
     time_synchronisation: TimeSynchronisationConfig | None = None
 
 
+class RobotCommand(BaseModel):
+    """A profile-defined logical Cockpit command."""
+
+    subject: str = Field(pattern=r"^[a-z0-9]+(?:\.[a-z0-9-]+)+$")
+    unit: str = ""
+
+
+class SoundboardSound(BaseModel):
+    """A selectable sound that is resolved by Control on the robot."""
+
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    label: str = Field(min_length=1, max_length=80)
+    file: str = Field(min_length=1, max_length=255)
+
+
+class SoundboardConfig(BaseModel):
+    """Profile-defined K9 soundboard contents."""
+
+    directory: str = Field(min_length=1, max_length=255)
+    sounds: list[SoundboardSound] = Field(min_length=1, max_length=64)
+
+
+class ActiveRobotProfile(ActiveRobotTimeProfile):
+    """The active profile fields consumed by Cockpit's shared shell."""
+
+    display_name: str = Field(min_length=1, max_length=80)
+    identity_icon: str = Field(default="fa-robot", pattern=r"^fa-[a-z0-9-]+$")
+    capabilities: dict[str, bool] = Field(default_factory=dict)
+    commands: dict[str, RobotCommand] = Field(default_factory=dict)
+    soundboard: SoundboardConfig | None = None
+
+
 class BrowserTimeSynchronisation(BaseModel):
     """UTC supplied by the authenticated browser in Unix milliseconds."""
 
     unix_time_ms: int = Field(ge=1_704_067_200_000, le=4_102_444_800_000)
+
+
+class SoundboardPlaybackRequest(BaseModel):
+    """A user-selected profile sound identifier."""
+
+    sound_id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]*$")
 
 
 def active_robot_profile_path() -> Path:
@@ -110,11 +148,11 @@ def active_robot_profile_path() -> Path:
     return PROJECT_ROOT / "configs" / "profiles" / f"{ROBOT_PROFILE_NAME}.json"
 
 
-def load_active_robot_time_profile() -> ActiveRobotTimeProfile:
-    """Load profile-derived time relay settings once during Cockpit startup."""
+def load_active_robot_profile() -> ActiveRobotProfile:
+    """Load the active profile-derived Cockpit configuration once at startup."""
     path = active_robot_profile_path()
     try:
-        profile = ActiveRobotTimeProfile.model_validate_json(path.read_text(encoding="utf-8"))
+        profile = ActiveRobotProfile.model_validate_json(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise RuntimeError(f"Active robot profile was not found: {path}") from exc
     except (json.JSONDecodeError, ValueError) as exc:
@@ -128,10 +166,26 @@ def load_active_robot_time_profile() -> ActiveRobotTimeProfile:
             raise RuntimeError(
                 "Active robot profile time-synchronisation subjects do not match its namespace"
             )
+    soundboard_enabled = profile.capabilities.get("soundboard", False)
+    if soundboard_enabled:
+        if profile.soundboard is None:
+            raise RuntimeError("Active robot profile enables soundboard without soundboard configuration")
+        sound_command = profile.commands.get("sound.play")
+        expected_sound_subject = f"{profile.namespace}.command.sound.play"
+        if sound_command is None or sound_command.subject != expected_sound_subject:
+            raise RuntimeError("Active robot profile sound command does not match its namespace")
+        if len({sound.id for sound in profile.soundboard.sounds}) != len(profile.soundboard.sounds):
+            raise RuntimeError("Active robot profile soundboard contains duplicate sound identifiers")
+    elif profile.soundboard is not None:
+        raise RuntimeError("Active robot profile defines soundboard configuration without enabling it")
     return profile
 
 
-ACTIVE_ROBOT_TIME_PROFILE = load_active_robot_time_profile()
+ACTIVE_ROBOT_PROFILE = load_active_robot_profile()
+# Retained as a named alias while time synchronisation is migrated to the full
+# active profile object.
+ACTIVE_ROBOT_TIME_PROFILE = ACTIVE_ROBOT_PROFILE
+templates.env.globals["active_robot_profile"] = ACTIVE_ROBOT_PROFILE
 
 
 def load_media_config() -> MediaConfig:
@@ -385,7 +439,12 @@ async def favicon():
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse(request=request, name="home.jinja", context={"config": {"simulator_enabled": ENABLE_SIMULATOR}})
+    soundboard = ACTIVE_ROBOT_PROFILE.soundboard if ACTIVE_ROBOT_PROFILE.capabilities.get("soundboard", False) else None
+    return templates.TemplateResponse(
+        request=request,
+        name="home.jinja",
+        context={"config": {"simulator_enabled": ENABLE_SIMULATOR}, "soundboard": soundboard},
+    )
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -457,6 +516,38 @@ async def relay_browser_time(payload: BrowserTimeSynchronisation, request: Reque
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Could not publish time synchronisation") from exc
     return {"accepted": True, "interval_seconds": config.interval_seconds}
+
+
+@app.post("/api/soundboard/play")
+async def relay_soundboard_playback(payload: SoundboardPlaybackRequest, request: Request):
+    """Relay an authorised K9 sound selection to the profile-owned Control command."""
+    user = authenticated_user(request)
+    if user is None or user["role"] not in {"driver", "admin"}:
+        raise HTTPException(status_code=403, detail="Driver or administrator authentication is required")
+
+    soundboard = ACTIVE_ROBOT_PROFILE.soundboard
+    sound_command = ACTIVE_ROBOT_PROFILE.commands.get("sound.play")
+    if not ACTIVE_ROBOT_PROFILE.capabilities.get("soundboard", False) or soundboard is None or sound_command is None:
+        raise HTTPException(status_code=404, detail="Soundboard is not configured for this robot")
+    sound = next((item for item in soundboard.sounds if item.id == payload.sound_id), None)
+    if sound is None:
+        raise HTTPException(status_code=404, detail="Unknown sound")
+    client = getattr(request.app.state, "nats_client", None)
+    if client is None:
+        raise HTTPException(status_code=503, detail="NATS Core is unavailable")
+
+    message = {
+        "value": sound.id,
+        "units": sound_command.unit,
+        "profile": ACTIVE_ROBOT_PROFILE.profile_id,
+        "source": "cockpit-sound-drawer",
+    }
+    try:
+        await client.publish(sound_command.subject, json.dumps(message, separators=(",", ":")).encode())
+        await client.flush(timeout=1)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Could not publish soundboard command") from exc
+    return {"accepted": True, "sound_id": sound.id, "label": sound.label}
 
 
 @app.get("/account/", response_class=HTMLResponse)

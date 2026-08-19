@@ -2,6 +2,7 @@
   "schema_version": 1,
   "profile_id": "k9",
   "display_name": "K9",
+  "identity_icon": "fa-bone",
   "profile_status": "functional-example",
   "namespace": "k9",
   "transport": { "nats_subject_prefix": "k9." },
@@ -24,7 +25,8 @@
   },
   "instruments": [
     { "id": "battery", "enabled": true, "position": "top-bar" },
-    { "id": "network-status", "enabled": true, "position": "top-bar" }
+    { "id": "network-status", "enabled": true, "position": "top-bar" },
+    { "id": "soundboard", "enabled": true, "position": "right-drawer" }
   ],
   "telemetry": {
     "battery_percentage": { "subject": "k9.telemetry.power.battery.percentage", "unit": "%", "scale": 1, "precision": 0 },
