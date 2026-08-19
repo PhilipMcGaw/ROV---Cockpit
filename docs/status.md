@@ -11,6 +11,9 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - TypeScript state, topic mapping, parsing, and reconnecting WebSocket adapter.
 - Independent `<rov-depth>` Web Component consuming shared cockpit state.
 - Vue-rendered battery status instrument consuming shared cockpit state.
+- Shared translucent operator shell on every page: compact status bar, browser-WebSocket link indicator, local clock, and a hamburger-triggered navigation popover.
+- Vue-rendered live-view bottom dock presenting the selected camera and live depth, heading, roll, pitch, primary-light percentage, camera tilt, and water temperature without sending control commands.
+- The HUD depth scale retains only its graduations and centre read-off line; live numeric depth is presented once in the bottom dock.
 - Battery-percentage contract enforced as numeric `0–100` percent; legacy `0–10` and `0–1` scaling is not supported.
 - Independent `<rov-network-status>` and `<rov-depth>` Web Components consuming shared cockpit state until their Vue ports are completed.
 - ROV combined `<rov-hud>` instrument presenting roll, pitch, depth, and heading in one navigation overlay. This is the intended navigation instrument for the ROV cockpit.
@@ -32,6 +35,8 @@ The current repository state is not recorded as bench-tested or production-valid
 
 - Profile-driven selection of instrument modules beyond the current ROV HUD and shared status instruments.
 - Robot-backed persistence for instrument visual settings.
+- Profile-defined live-dock controls, including properly authorised arm/mode/camera actions and live Control status.
+- Alert and NATS-health summaries for the shared status bar; the current `Link` indicator intentionally represents only the browser WebSocket.
 - A depth-scale configuration GUI, with robot-backed minimum, maximum, graduation-step, visibility-window, and presentation settings.
 - CSS Grid, Pico.css, Vue component migration, and complete TypeScript frontend migration.
 - Reproducible TypeScript generation in every supported development environment.

@@ -12,6 +12,8 @@
     "heading": true,
     "attitude": true,
     "camera_pitch": true,
+    "lights": true,
+    "water_temperature": true,
     "map": true,
     "soundboard": false,
     "drive_control": true
@@ -28,7 +30,9 @@
     "heading": { "subject": "rov.telemetry.navigation.heading", "unit": "°", "scale": 1, "precision": 1 },
     "roll": { "subject": "rov.telemetry.navigation.attitude.roll", "unit": "°", "scale": 1, "precision": 1 },
     "pitch": { "subject": "rov.telemetry.navigation.attitude.pitch", "unit": "°", "scale": 1, "precision": 1 },
-    "camera_pitch": { "subject": "rov.telemetry.camera.main.pitch", "unit": "°", "scale": 1, "precision": 1 }
+    "camera_pitch": { "subject": "rov.telemetry.camera.main.pitch", "unit": "°", "scale": 1, "precision": 1 },
+    "light_percentage": { "subject": "rov.telemetry.output.lights.left", "unit": "%", "scale": 1, "precision": 0 },
+    "water_temperature": { "subject": "rov.telemetry.water.temperature", "unit": "°C", "scale": 1, "precision": 1 }
   },
   "commands": {
     "drive.throttle": { "subject": "rov.command.drive.throttle", "unit": "%", "minimum": -100, "maximum": 100 },

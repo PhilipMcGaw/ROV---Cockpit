@@ -14,6 +14,9 @@ def test_simulator_exposes_all_instrument_topics() -> None:
         "sensor/ahrs/imu/roll",
         "input/analog/battery/voltage",
         "input/analog/battery/percentage",
+        "output/lights/left",
+        "sensor/camera/main/pitch",
+        "sensor/water/temperature",
     )
     for topic in expected:
         assert topic in content

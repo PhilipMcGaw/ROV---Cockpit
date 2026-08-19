@@ -11,6 +11,7 @@ export const TOPICS = {
   latitude: "sensor/ahrs/gps/location/lat",
   longitude: "sensor/ahrs/gps/location/lng",
   altitude: "sensor/ahrs/gps/location/altitude",
-  cameraPitch: "sensor/camera/main/pitch"
-  ,networkStatus: "system/network/status"
+  cameraPitch: "sensor/camera/main/pitch",
+  lightPercentage: "output/lights/left",
+  networkStatus: "system/network/status"
 } as const;

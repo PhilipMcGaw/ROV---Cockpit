@@ -12,6 +12,7 @@ export const TOPICS = {
     longitude: "sensor/ahrs/gps/location/lng",
     altitude: "sensor/ahrs/gps/location/altitude",
     cameraPitch: "sensor/camera/main/pitch",
+    lightPercentage: "output/lights/left",
     networkStatus: "system/network/status"
 };
 //# sourceMappingURL=topics.js.map

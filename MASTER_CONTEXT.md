@@ -511,7 +511,7 @@ presentations are not active dashboard presentations.
 
 ### Camera pitch
 
-A separate camera inclination indicator consumes:
+The live-view bottom dock includes a camera inclination readout that consumes:
 
 ```text
 sensor/camera/main/pitch
@@ -529,6 +529,11 @@ servo home position into this representation.
 The relationship between the physical servo position and the reported value
 must be bench validated before the value is described as a measured camera
 orientation.
+
+The same dock presents the primary ROV light level from `output/lights/left`
+as a numeric `0–100 %` value and water temperature from
+`sensor/water/temperature` in `°C`. These are presentation-only telemetry
+values; Cockpit does not directly drive the light output or camera actuator.
 
 ---
 
@@ -1282,8 +1287,8 @@ Other robot profiles may select different instruments or omit ROV-specific
 navigation displays.
 
 The roadmap includes a reusable depth-scale configuration GUI. It will expose
-the depth range, graduation step, visible viewport region, line length, and
-readout presentation, then save those values with the active robot profile so
+the depth range, graduation step, visible viewport region, and line length,
+then save those values with the active robot profile so
 the HUD does not require code changes for routine scale adjustments.
 
 This allows the same underlying Cockpit application to support ROVs, ground
@@ -2215,8 +2220,19 @@ All Cockpit HTML pages use the shared `templates/base.jinja` shell and
 `templates/header.jinja` navigation. Page-specific templates must not recreate
 the document head or primary navigation; they provide content and scoped
 scripts through Jinja blocks.
-The shared header does not show temperature, heading, depth, or uptime; these
-remain in the appropriate live HUD and telemetry/data views.
+The shared header is a compact translucent operator shell: it contains the ROV
+identity, a status/alert surface, battery percentage, voltage, a browser-local
+clock, and a `Link` indicator for the Cockpit browser WebSocket. Navigation is
+provided through its hamburger-triggered translucent popover. `Link` is not a
+claim of NATS broker health. The shared header does not show temperature,
+heading, depth, or uptime; these remain in the appropriate live HUD and
+telemetry/data views.
+The live ROV page also has a translucent bottom dock. Its implemented metrics
+are read-only camera, depth, heading, roll, pitch, primary-light percentage,
+camera tilt, and water-temperature presentation. Future
+profile-defined controls may occupy the dock only after they have an authorised
+Cockpit-to-Control command contract; the dock must never become an implicit
+owner of arming, actuator, or safety behaviour.
 The HUD heading tape centres the current heading beneath its amber marker and
 centres each tick before applying its relative bearing offset, keeping labels
 readable while the heading changes.
