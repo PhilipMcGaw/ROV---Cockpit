@@ -1067,6 +1067,7 @@ Profiles may define:
 - available Views;
 - available controls;
 - telemetry variables;
+- Control-owned hardware adapters and their bindings to logical command and telemetry keys;
 - gamepad mappings;
 - Actions;
 - camera/video configuration;
@@ -2011,6 +2012,9 @@ reconsidered:
 The following are **not** out of scope, but may be roadmap items:
 
 - authentication;
+- a library-neutral profile icon schema and locally bundled SVG icon registry,
+  with Lucide assessed for new Vue components before any complete Font Awesome
+  retirement;
 - extensive Widget customisation;
 - custom Widgets;
 - configurable Views;

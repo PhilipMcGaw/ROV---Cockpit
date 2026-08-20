@@ -35,6 +35,7 @@
     "distance_left": { "subject": "piwars.telemetry.sensors.distance.left", "unit": "m", "scale": 1, "precision": 2 },
     "distance_right": { "subject": "piwars.telemetry.sensors.distance.right", "unit": "m", "scale": 1, "precision": 2 },
     "line_left": { "subject": "piwars.telemetry.sensors.line.left", "unit": "", "scale": 1, "precision": 0 },
+    "line_centre": { "subject": "piwars.telemetry.sensors.line.centre", "unit": "", "scale": 1, "precision": 0 },
     "line_right": { "subject": "piwars.telemetry.sensors.line.right", "unit": "", "scale": 1, "precision": 0 }
   },
   "commands": {
@@ -42,6 +43,22 @@
     "drive.steering": { "subject": "piwars.command.drive.steering", "unit": "%", "minimum": -100, "maximum": 100 },
     "challenge.start": { "subject": "piwars.command.challenge.start", "unit": "", "minimum": 0, "maximum": 1 },
     "challenge.stop": { "subject": "piwars.command.challenge.stop", "unit": "", "minimum": 0, "maximum": 1 }
+  },
+  "hardware": {
+    "adapters": [
+      {
+        "id": "main-hat",
+        "driver": "adeept-robot-hat-adm133",
+        "model": "ADM133",
+        "validation_status": "planned-unverified",
+        "bindings": {
+          "dc-motor-drive": { "commands": ["drive.throttle", "drive.steering"] },
+          "adc-battery": { "telemetry": ["battery_percentage", "battery_voltage"] },
+          "line-tracking": { "telemetry": ["line_left", "line_centre", "line_right"] },
+          "ultrasonic-range": { "telemetry": ["distance_front"] }
+        }
+      }
+    ]
   },
   "cameras": {
     "default": "main",

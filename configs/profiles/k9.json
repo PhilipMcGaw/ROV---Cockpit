@@ -40,6 +40,21 @@
     "head.tilt": { "subject": "k9.command.animatronics.head.tilt", "unit": "°", "minimum": -45, "maximum": 45 },
     "sound.play": { "subject": "k9.command.sound.play", "unit": "", "minimum": 0, "maximum": 1 }
   },
+  "hardware": {
+    "adapters": [
+      {
+        "id": "main-hat",
+        "driver": "adeept-robot-hat-adm133",
+        "model": "ADM133",
+        "validation_status": "planned-unverified",
+        "bindings": {
+          "dc-motor-drive": { "commands": ["drive.throttle", "drive.steering"] },
+          "pca9685-servos": { "commands": ["head.pan", "head.tilt"] },
+          "adc-battery": { "telemetry": ["battery_percentage", "battery_voltage"] }
+        }
+      }
+    ]
+  },
   "cameras": {
     "default": "main",
     "devices": [{ "id": "main", "label": "Main camera", "enabled": true, "stream_path": "/cam1" }]

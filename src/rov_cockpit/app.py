@@ -104,6 +104,38 @@ class RobotCommand(BaseModel):
     unit: str = ""
 
 
+class RobotTelemetry(BaseModel):
+    """A profile-defined logical telemetry value."""
+
+    subject: str = Field(pattern=r"^[a-z0-9]+(?:\.[a-z0-9-]+)+$")
+    unit: str = ""
+
+
+class HardwareTopicBinding(BaseModel):
+    """Logical profile keys consumed or published by one hardware function."""
+
+    commands: list[str] = Field(default_factory=list)
+    telemetry: list[str] = Field(default_factory=list)
+
+
+class HardwareAdapter(BaseModel):
+    """One Control-owned hardware adapter declared by the shared profile."""
+
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]*$")
+    driver: str = Field(pattern=r"^[a-z0-9][a-z0-9-]*$")
+    model: str = Field(min_length=1, max_length=80)
+    validation_status: str = Field(
+        pattern=r"^(planned-unverified|bench-tested|production-validated)$"
+    )
+    bindings: dict[str, HardwareTopicBinding] = Field(default_factory=dict)
+
+
+class HardwareConfiguration(BaseModel):
+    """Control-owned hardware adapters and their logical topic bindings."""
+
+    adapters: list[HardwareAdapter] = Field(default_factory=list)
+
+
 class SoundboardSound(BaseModel):
     """A selectable sound that is resolved by Control on the robot."""
 
@@ -126,6 +158,8 @@ class ActiveRobotProfile(ActiveRobotTimeProfile):
     identity_icon: str = Field(default="fa-robot", pattern=r"^fa-[a-z0-9-]+$")
     capabilities: dict[str, bool] = Field(default_factory=dict)
     commands: dict[str, RobotCommand] = Field(default_factory=dict)
+    telemetry: dict[str, RobotTelemetry] = Field(default_factory=dict)
+    hardware: HardwareConfiguration = Field(default_factory=HardwareConfiguration)
     soundboard: SoundboardConfig | None = None
 
 
@@ -178,6 +212,24 @@ def load_active_robot_profile() -> ActiveRobotProfile:
             raise RuntimeError("Active robot profile soundboard contains duplicate sound identifiers")
     elif profile.soundboard is not None:
         raise RuntimeError("Active robot profile defines soundboard configuration without enabling it")
+
+    adapter_ids = [adapter.id for adapter in profile.hardware.adapters]
+    if len(adapter_ids) != len(set(adapter_ids)):
+        raise RuntimeError("Active robot profile defines duplicate hardware adapter identifiers")
+    for adapter in profile.hardware.adapters:
+        for function, binding in adapter.bindings.items():
+            unknown_commands = sorted(set(binding.commands) - set(profile.commands))
+            unknown_telemetry = sorted(set(binding.telemetry) - set(profile.telemetry))
+            if unknown_commands or unknown_telemetry:
+                details = []
+                if unknown_commands:
+                    details.append(f"unknown commands: {', '.join(unknown_commands)}")
+                if unknown_telemetry:
+                    details.append(f"unknown telemetry: {', '.join(unknown_telemetry)}")
+                raise RuntimeError(
+                    f"Hardware adapter {adapter.id!r} binding {function!r} references "
+                    + "; ".join(details)
+                )
     return profile
 
 

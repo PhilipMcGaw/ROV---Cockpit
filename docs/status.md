@@ -25,6 +25,7 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - Development sensor simulator page with runtime enable/disable control and slider-driven browser telemetry injection.
 - Profile-driven browser-assisted time relay: an authenticated driver/admin page publishes UTC Unix milliseconds to the active profile's Cockpit NATS subject on load and every 60 seconds; Control remains the sole service permitted to alter the RPi clock.
 - K9/profile-enabled right-edge soundboard drawer. It displays the active profile's sound labels and lets an authenticated driver or administrator publish the validated selected ID to the profile-owned `sound.play` NATS command. ROV and PiWars profiles do not render this drawer.
+- Shared-profile validation of Control-owned hardware adapters. K9 and PiWars now bind selected Adeept Robot HAT ADM133 functions to logical command and telemetry keys; the Control driver and all physical HAT behaviour remain planned and unbench-tested.
 - Canonical Raspberry Pi provisioning for the co-installed Cockpit, Control, and Datalogger services. It renders service, Motion, and Nginx templates for the actual checkout paths; installs authenticated NATS configuration; invokes Control-owned network, SMB, and Avahi deployment; and creates the shared media/CSV directories.
 - Existing instruments, camera handling, media capture/download, CSV access, authentication, and Gamepad API support remain part of the application.
 
@@ -44,6 +45,7 @@ The current repository state is not recorded as bench-tested or production-valid
 - Alert and NATS-health summaries for the shared status bar; the current `Link` indicator intentionally represents only the browser WebSocket.
 - A depth-scale configuration GUI, with robot-backed minimum, maximum, graduation-step, visibility-window, and presentation settings.
 - CSS Grid, Pico.css, Vue component migration, and complete TypeScript frontend migration.
+- A profile-compatible icon-system migration: introduce library-neutral icon IDs and a locally bundled, curated SVG registry for new Vue components; assess Lucide as the preferred candidate, then retire Font Awesome only after all remaining template and legacy-component uses have migrated.
 - Reproducible TypeScript generation in every supported development environment.
 - Complete production authentication and authorisation hardening.
 - Raspberry Pi bench validation of browser-assisted clock synchronisation, including the deployed `CAP_SYS_TIME` systemd capability and NATS status result.
