@@ -51,7 +51,7 @@ uname -m
 cat /etc/os-release
 getconf LONG_BIT
 sudo apt update
-sudo apt install --yes git
+sudo apt install git
 ```
 
 ### Choose a source-installation route
