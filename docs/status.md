@@ -27,6 +27,10 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - K9/profile-enabled right-edge soundboard drawer. It displays the active profile's sound labels and lets an authenticated driver or administrator publish the validated selected ID to the profile-owned `sound.play` NATS command. ROV and PiWars profiles do not render this drawer.
 - Shared-profile validation of Control-owned hardware adapters. K9 and PiWars now bind selected Adeept Robot HAT ADM133 functions to logical command and telemetry keys. K9 additionally maps the semantic aliases `head-pan` and `head-tilt` to stable `servo-00` and `servo-01` port aliases. The Control driver and all physical HAT behaviour remain planned and unbench-tested.
 - Canonical Raspberry Pi provisioning for the co-installed Cockpit, Control, and Datalogger services. It renders service, Motion, and Nginx templates for the actual checkout paths; installs authenticated NATS configuration; invokes Control-owned network, SMB, and Avahi deployment; and creates the shared media/CSV directories.
+- Canonical first-boot instructions with two source-installation routes: a
+  read-only HTTPS route for normal robots, and Philip's Pi-specific GitHub SSH
+  route for developer pull/push work. Both produce the same sibling checkout
+  layout before Cockpit provisioning begins.
 - Canonical Raspberry Pi provisioning installs Zsh, HyFetch, and Oh My Zsh for the selected runtime user, selects the `clean` theme, and adds an interactive-login greeting. It also creates a `visudo`-validated, passwordless-sudo policy for that user; this is intentional for a trusted robot/development machine, not evidence of a hardened multi-user host.
 - Existing instruments, camera handling, media capture/download, CSV access, authentication, and Gamepad API support remain part of the application.
 

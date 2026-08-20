@@ -26,17 +26,125 @@ On Linux, the documented default development location is `~/robots/ROV---Cockpit
 
 ## One-time installation
 
-### Clone the sibling repositories
+### Connect to the new Raspberry Pi
 
-The robot uses separate repositories for separate responsibilities, but they are installed side-by-side on the same Raspberry Pi. Clone the three runtime repositories into one common parent directory:
+In Raspberry Pi Imager, set the hostname and normal runtime username, enable
+SSH, and configure a network that can reach the Pi. For example, the K9 image
+uses hostname `k9` and runtime username `philip`. After its first boot, connect
+from a trusted computer:
+
+```zsh
+ssh philip@k9.local
+```
+
+Use the Pi's DHCP address instead if local hostname discovery is unavailable.
+The account used here becomes the normal runtime account when provisioning is
+run, so it must be a trusted administrative account.
+
+Confirm the operating-system baseline, then install the small bootstrap
+dependency needed to retrieve the project source. This is intentionally
+separate from the full provisioner because the provisioner cannot run until the
+Cockpit repository is present.
+
+```zsh
+uname -m
+cat /etc/os-release
+getconf LONG_BIT
+sudo apt update
+sudo apt install --yes git
+```
+
+### Choose a source-installation route
+
+The robot needs Cockpit, Control, and Datalogger as sibling repositories in
+`~/robots/`. Choose exactly one route below. Both install the same code and
+continue at [Configure deployment secrets](#configure-deployment-secrets).
+
+#### Route A — standard robot installation
+
+Use this route for a normal robot installation. It retrieves the public source
+over HTTPS and needs no GitHub account, SSH key, or ability to push changes.
+Use it when the Pi only needs to receive reviewed updates.
 
 ```zsh
 mkdir -p ~/robots
 cd ~/robots
-git clone <cockpit-repository-url> ROV---Cockpit
-git clone <control-repository-url> ROV---Control
-git clone <datalogger-repository-url> ROV---Datalogger
+git clone --depth=1 https://github.com/PhilipMcGaw/ROV---Cockpit.git ROV---Cockpit
+git clone --depth=1 https://github.com/PhilipMcGaw/ROV---Control.git ROV---Control
+git clone --depth=1 https://github.com/PhilipMcGaw/ROV---Datalogger.git ROV---Datalogger
 ```
+
+To receive a later reviewed update, pull each repository and rerun the
+provisioner only when a deployment-affecting change requires it:
+
+```zsh
+cd ~/robots/ROV---Cockpit && git pull --ff-only
+cd ~/robots/ROV---Control && git pull --ff-only
+cd ~/robots/ROV---Datalogger && git pull --ff-only
+```
+
+#### Route B — Philip's developer installation
+
+Use this route when the Pi must pull branches and push commits to Philip's
+GitHub repositories. It uses an SSH key created on this specific Pi. The
+private key MUST remain in `~/.ssh/`, MUST NOT be copied into a repository or
+SMB share, and MUST NOT be committed. Anyone able to use the key receives the
+same GitHub permissions as the account to which it is added.
+
+Install the SSH client, create a new Ed25519 key, and display its public half:
+
+```zsh
+sudo apt install --yes openssh-client
+ssh-keygen -t ed25519 -C "k9-philip"
+cat ~/.ssh/id_ed25519.pub
+```
+
+Choose a passphrase when prompted. Copy the one-line public-key output and add
+it to Philip's GitHub account at
+<https://github.com/settings/keys>. Give it a recognisable title such as
+`k9 Raspberry Pi`. Do not add the private-key file. Confirm that GitHub
+recognises the key:
+
+```zsh
+ssh -T git@github.com
+```
+
+GitHub normally reports a successful account authentication and then closes
+the shell, because it does not provide interactive SSH sessions. Configure the
+author identity with Philip's verified GitHub email address, then clone all
+three repositories over SSH:
+
+```zsh
+git config --global user.name "Philip McGaw"
+git config --global user.email "<Philip's verified GitHub email address>"
+mkdir -p ~/robots
+cd ~/robots
+git clone git@github.com:PhilipMcGaw/ROV---Cockpit.git ROV---Cockpit
+git clone git@github.com:PhilipMcGaw/ROV---Control.git ROV---Control
+git clone git@github.com:PhilipMcGaw/ROV---Datalogger.git ROV---Datalogger
+```
+
+For normal developer work, create a branch, commit only non-secret changes,
+and push it for review:
+
+```zsh
+cd ~/robots/ROV---Cockpit
+git switch -c <descriptive-branch-name>
+git status
+git add <reviewed-files>
+git commit -m "Describe the change"
+git push --set-upstream origin HEAD
+```
+
+Ignored Control deployment files contain real robot credentials and MUST stay
+out of commits. Before pulling shared changes, check `git status`; commit,
+stash, or deliberately discard only your own local code changes. Do not use
+`git reset --hard` as an update shortcut on a configured robot.
+
+### Configure deployment secrets
+
+The three repositories have separate responsibilities but are installed
+side-by-side on the same Raspberry Pi:
 
 The final layout is:
 

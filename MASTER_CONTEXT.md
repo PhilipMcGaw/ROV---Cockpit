@@ -1705,6 +1705,21 @@ Cockpit, Control, and Datalogger services. It derives the actual repository
 locations and invoking runtime account; deployment units and Nginx are rendered
 from templates rather than assuming `/home/pi` paths.
 
+The source checkout must exist before the provisioner can install its full
+dependency set. The documented bootstrap therefore installs `git` from the
+configured Raspberry Pi OS repository, then uses one of two source routes:
+
+- standard robot installation: read-only public HTTPS clones requiring no
+  GitHub credential or write capability;
+- Philip's developer installation: SSH clones authenticated by a unique
+  Ed25519 key kept on that Pi and authorised on Philip's GitHub account, so it
+  can pull branches and push reviewed commits.
+
+Both routes place Cockpit, Control, and Datalogger as sibling repositories
+below `~/robots/`. GitHub credentials and private SSH keys MUST NOT be stored
+in a repository, profile, Control secrets file, or SMB share. The detailed
+first-boot and update commands are maintained in `docs/deployment.md`.
+
 It may install required system packages such as:
 
 - Python;
