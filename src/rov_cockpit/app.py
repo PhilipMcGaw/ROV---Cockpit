@@ -118,6 +118,14 @@ class HardwareTopicBinding(BaseModel):
     telemetry: list[str] = Field(default_factory=list)
 
 
+class HardwareActuatorBinding(BaseModel):
+    """One semantic actuator assigned to a stable Control-owned physical port."""
+
+    port_alias: str = Field(pattern=r"^servo-[0-9]{2}$")
+    pca9685_channel: int = Field(ge=0, le=15)
+    command: str = Field(pattern=r"^[a-z0-9][a-z0-9.-]*$")
+
+
 class HardwareAdapter(BaseModel):
     """One Control-owned hardware adapter declared by the shared profile."""
 
@@ -128,6 +136,7 @@ class HardwareAdapter(BaseModel):
         pattern=r"^(planned-unverified|bench-tested|production-validated)$"
     )
     bindings: dict[str, HardwareTopicBinding] = Field(default_factory=dict)
+    actuators: dict[str, HardwareActuatorBinding] = Field(default_factory=dict)
 
 
 class HardwareConfiguration(BaseModel):
@@ -230,6 +239,32 @@ def load_active_robot_profile() -> ActiveRobotProfile:
                     f"Hardware adapter {adapter.id!r} binding {function!r} references "
                     + "; ".join(details)
                 )
+        allocated_channels: set[int] = set()
+        servo_binding = adapter.bindings.get("pca9685-servos")
+        for actuator_name, actuator in adapter.actuators.items():
+            expected_port_alias = f"servo-{actuator.pca9685_channel:02d}"
+            if actuator.port_alias != expected_port_alias:
+                raise RuntimeError(
+                    f"Hardware adapter {adapter.id!r} actuator {actuator_name!r} maps "
+                    f"{actuator.port_alias!r} to PCA9685 channel {actuator.pca9685_channel}; "
+                    f"expected {expected_port_alias!r}"
+                )
+            if actuator.command not in profile.commands:
+                raise RuntimeError(
+                    f"Hardware adapter {adapter.id!r} actuator {actuator_name!r} references "
+                    f"unknown command {actuator.command!r}"
+                )
+            if servo_binding is None or actuator.command not in servo_binding.commands:
+                raise RuntimeError(
+                    f"Hardware adapter {adapter.id!r} actuator {actuator_name!r} command "
+                    f"{actuator.command!r} is not bound to pca9685-servos"
+                )
+            if actuator.pca9685_channel in allocated_channels:
+                raise RuntimeError(
+                    f"Hardware adapter {adapter.id!r} assigns PCA9685 channel "
+                    f"{actuator.pca9685_channel} more than once"
+                )
+            allocated_channels.add(actuator.pca9685_channel)
     return profile
 
 

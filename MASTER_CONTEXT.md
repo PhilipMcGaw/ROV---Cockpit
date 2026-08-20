@@ -23,6 +23,13 @@ mobile robots.
 Cockpit runs **on the Raspberry Pi installed inside the robot**. The operator
 connects to Cockpit using a web browser.
 
+The canonical Raspberry Pi provisioner also establishes the normal robot
+runtime user's interactive environment: Zsh, Oh My Zsh's `clean` theme, and an
+interactive HyFetch greeting. It deliberately grants that runtime user
+passwordless `sudo` through a separately validated `/etc/sudoers.d` policy.
+This is appropriate only for a trusted robot or development host, not a
+general-purpose multi-user or Internet-exposed Linux host.
+
 Firefox is the preferred operator browser. Chromium-based browsers and Safari
 should also remain supported.
 
@@ -88,6 +95,13 @@ The production platform is:
 
 > **Raspberry Pi OS, the Debian-based operating system provided by the
 > Raspberry Pi Foundation.**
+
+The selected robot baseline is Raspberry Pi OS Trixie Lite 64-bit (`arm64`) on
+a Raspberry Pi 3B+ or newer 64-bit model. The Pi 3B+'s 1 GB RAM makes the Lite
+image appropriate for the headless co-installed services. This target remains
+unbench-tested until a clean-image provision and hardware evidence are
+recorded. Legacy 32-bit is a temporary compatibility fallback only when a
+specific verified dependency blocks Trixie 64-bit use.
 
 Cockpit must therefore be designed and tested primarily as a Raspberry Pi
 Linux application.
@@ -1067,7 +1081,7 @@ Profiles may define:
 - available Views;
 - available controls;
 - telemetry variables;
-- Control-owned hardware adapters and their bindings to logical command and telemetry keys;
+- Control-owned hardware adapters, bindings to logical command and telemetry keys, and validated semantic actuator aliases;
 - gamepad mappings;
 - Actions;
 - camera/video configuration;

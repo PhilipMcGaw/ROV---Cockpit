@@ -18,6 +18,31 @@ At present, robot profiles shall live in the Cockpit repository under `configs/p
 
 An adapter declaration under `hardware.adapters` identifies a Control driver and binds each board function to profile `commands` and `telemetry` keys. The subject text remains defined once in those command and telemetry objects; adapter bindings refer to the logical keys and Cockpit validates every reference at start-up. Cockpit does not use the adapter declaration to access hardware. Control resolves the bound logical topics to its drivers, physical channels, calibration, and safety limits.
 
+Where an adapter has named physical actuator ports, a profile may also define
+`actuators`. Each entry has a robot-purpose alias, such as `head-pan`, and
+maps it to a stable Control port alias and logical command. For the ADM133,
+the canonical physical aliases are `servo-00` through `servo-15`, matching
+PCA9685 channels `0` through `15`. Zero-padding prevents `servo-10` from
+sorting between `servo-01` and `servo-02`.
+
+```json
+"actuators": {
+  "head-pan": {
+    "port_alias": "servo-00",
+    "pca9685_channel": 0,
+    "command": "head.pan"
+  }
+}
+```
+
+The purpose alias is specific to the robot; the port alias is stable across
+robots. Cockpit validates that the port alias matches the declared channel,
+that the command exists, that it is bound to the adapter's servo function, and
+that a channel is not allocated twice. The declaration remains Control-owned
+configuration: Cockpit MUST NOT use it to drive a servo. Control MUST also
+reject an allocation that conflicts with an enabled motor channel or fails
+commissioning.
+
 On the Raspberry Pi, the active profile shall be installed at a shared deployment path, initially `/etc/robot/profile.json`. Cockpit, Control, and Datalogger shall all read this same file at boot.
 
 Profiles may enable browser-assisted clock synchronisation for Raspberry Pi hardware without an RTC. The `time_synchronisation` object defines the namespaced Cockpit command subject, Control status subject, synchronisation interval, and minimum adjustment threshold. The browser sends UTC Unix time in milliseconds only through Cockpit; it never connects directly to NATS or changes the system clock. Control validates the active profile identity and owns the actual Linux clock adjustment.

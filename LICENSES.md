@@ -34,3 +34,15 @@ retained when the Cockpit is copied or distributed.
 The npm lockfile records licences for the complete dependency tree, including
 transitive Vue and TypeScript build dependencies. It is not a substitute for
 this human-readable register.
+
+## Deployment-installed third-party components
+
+The canonical Raspberry Pi provisioner installs the following tools for the
+normal robot runtime user's interactive environment. They are not bundled in
+this repository; the target operating system's package manager or Git clone
+retains their applicable notices.
+
+| Component | Deployment use | Licence / notice |
+|---|---|---|
+| Oh My Zsh | Installed from its upstream Git repository to provide the `clean` Zsh theme | MIT; [Oh My Zsh licence](https://github.com/ohmyzsh/ohmyzsh/blob/master/LICENSE) |
+| HyFetch | Installed from the Debian package repository and run only for interactive Zsh logins | MIT; [HyFetch licence](https://github.com/hykilpikonna/hyfetch/blob/master/LICENSE.md) |

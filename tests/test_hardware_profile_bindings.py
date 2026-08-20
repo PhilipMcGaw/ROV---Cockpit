@@ -39,6 +39,12 @@ def test_k9_adm133_bindings_resolve_to_profile_topics() -> None:
         "k9.command.animatronics.head.pan",
         "k9.command.animatronics.head.tilt",
     ]
+    assert main_hat.actuators["head-pan"].port_alias == "servo-00"
+    assert main_hat.actuators["head-pan"].pca9685_channel == 0
+    assert main_hat.actuators["head-pan"].command == "head.pan"
+    assert main_hat.actuators["head-tilt"].port_alias == "servo-01"
+    assert main_hat.actuators["head-tilt"].pca9685_channel == 1
+    assert main_hat.actuators["head-tilt"].command == "head.tilt"
     assert [profile.telemetry[key].subject for key in main_hat.bindings["adc-battery"].telemetry] == [
         "k9.telemetry.power.battery.percentage",
         "k9.telemetry.power.battery.voltage",

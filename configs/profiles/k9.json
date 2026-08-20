@@ -51,6 +51,10 @@
           "dc-motor-drive": { "commands": ["drive.throttle", "drive.steering"] },
           "pca9685-servos": { "commands": ["head.pan", "head.tilt"] },
           "adc-battery": { "telemetry": ["battery_percentage", "battery_voltage"] }
+        },
+        "actuators": {
+          "head-pan": { "port_alias": "servo-00", "pca9685_channel": 0, "command": "head.pan" },
+          "head-tilt": { "port_alias": "servo-01", "pca9685_channel": 1, "command": "head.tilt" }
         }
       }
     ]

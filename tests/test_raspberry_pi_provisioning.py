@@ -1,6 +1,8 @@
 """Static deployment-contract checks for the co-installed Raspberry Pi services."""
 
 from pathlib import Path
+import shutil
+import subprocess
 
 
 COCKPIT_ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +33,28 @@ def test_provisioner_installs_the_required_platform_contract() -> None:
         "NATS_URL=nats://%s:%s@127.0.0.1:4222",
     ):
         assert required in provisioner
+
+
+def test_provisioner_configures_runtime_shell_and_sudo() -> None:
+    provisioner = read(COCKPIT_ROOT / "scripts" / "0_provision_raspberry_pi.sh")
+
+    for required in (
+        "git zsh hyfetch",
+        "configure_interactive_shell",
+        "configure_passwordless_sudo",
+        'ZSH_THEME=\"clean\"',
+        "[[ -o interactive ]]",
+        "usermod -s",
+        "visudo -cf",
+        "NOPASSWD:ALL",
+        "/etc/sudoers.d/90-rov-runtime-",
+    ):
+        assert required in provisioner
+
+    bash = shutil.which("bash")
+    if bash:
+        result = subprocess.run([bash, "-n", str(COCKPIT_ROOT / "scripts" / "0_provision_raspberry_pi.sh")], text=True, capture_output=True, check=False)
+        assert result.returncode == 0, result.stderr
 
 
 def test_service_templates_are_portable_and_use_the_restricted_nats_environment() -> None:
@@ -95,6 +119,7 @@ def test_rendered_nginx_and_motion_configuration_do_not_assume_a_checkout_path()
 def main() -> int:
     checks = (
         test_provisioner_installs_the_required_platform_contract,
+        test_provisioner_configures_runtime_shell_and_sudo,
         test_service_templates_are_portable_and_use_the_restricted_nats_environment,
         test_network_deployment_supports_named_profiles_and_wifi_fallback,
         test_control_runtime_launcher_derives_its_own_path,

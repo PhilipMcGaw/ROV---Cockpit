@@ -2,11 +2,15 @@
 
 ## Supported target
 
-The supported target for the complete robot installation is Raspberry Pi OS (the current name for Raspbian) based on Debian Bookworm, 64-bit `arm64`, on a Raspberry Pi 4 or 5 with at least 4 GB RAM. This is the recommended baseline for NATS Core, Nginx, Motion, NetworkManager, Samba, Avahi, and the three robot services.
+The selected target for the complete robot installation is **Raspberry Pi OS
+Trixie Lite 64-bit** (`arm64`) on a Raspberry Pi 3B+ or newer 64-bit Raspberry
+Pi. Lite is preferred because the robot is headless, leaving the Pi 3B+'s 1 GB
+RAM available for NATS Core, Nginx, Motion, NetworkManager, Samba, Avahi, and
+the three robot services.
 
-The provisioning script requires a Debian-based Linux system with `apt-get`; it does not currently verify the Raspberry Pi model, OS release, or CPU architecture. Raspberry Pi 3, Zero 2 W, older boards, Raspberry Pi OS Bullseye, and 32-bit `armhf` installations are not production-validated. They may run the Python application, but package availability, camera support, NATS installation, memory, and performance must be checked on the actual image before use.
+The provisioning script requires a Debian-based Linux system with `apt-get`; it does not currently verify the Raspberry Pi model, OS release, or CPU architecture. The Pi 3B+ Trixie 64-bit combination is the intended baseline but is not yet clean-image or hardware bench-validated. Package availability, camera support, NATS installation, memory, and performance must be recorded on the actual image before it is treated as an operational robot baseline.
 
-The complete installation is not supported on non-Debian distributions, 32-bit-only operating systems, or non-Raspberry-Pi ARM boards unless the required packages and hardware interfaces are separately verified. Development-only Cockpit testing remains supported on macOS, Windows, and general Linux without Raspberry Pi hardware.
+Do not choose Legacy 32-bit for a normal robot installation. Use it only as a documented temporary fallback if a required, verified hardware dependency cannot run on Trixie 64-bit. Non-Debian distributions, 32-bit-only operating systems, and non-Raspberry-Pi ARM boards are outside the baseline unless their packages and hardware interfaces are separately verified. Development-only Cockpit testing remains supported on macOS, Windows, and general Linux without Raspberry Pi hardware.
 
 Before provisioning, record the target details:
 
@@ -16,7 +20,7 @@ cat /etc/os-release
 getconf LONG_BIT
 ```
 
-Expected baseline: `aarch64`, Raspberry Pi OS Bookworm, and `64`.
+Expected baseline: `aarch64`, Raspberry Pi OS based on Debian Trixie, and `64`.
 
 On Linux, the documented default development location is `~/robots/ROV---Cockpit`, beside the other ROV repositories. On macOS, use a user-selected workspace beneath the home directory, for example `~/Projects/ROV/ROV---Cockpit`. Raspberry Pi provisioning renders the installed systemd and Nginx files using the actual repository locations and runtime account; no `/home/pi` checkout path is required.
 
@@ -70,7 +74,30 @@ chmod +x scripts/*.sh
 sudo bash scripts/0_provision_raspberry_pi.sh
 ```
 
-The provisioning script is the initial Raspberry Pi setup path. It installs Python, Node.js/npm, Nginx, Motion, curl, certificates, NATS Server, NetworkManager, its `dnsmasq` shared-network dependency, Avahi, and Samba from the configured Debian repositories; creates the Cockpit, Control, and Datalogger virtual environments; creates the shared `stills/`, `videos/`, and `data/csv/` directories; installs the shared robot profile at `/etc/robot/profile.json`; renders the Control, Cockpit, Datalogger, Motion, and Nginx configuration for the actual checkout paths; enables the services; and invokes Control's network deployment. NATS uses the credentials from the ignored secrets file and binds to `127.0.0.1` unless `NATS_REMOTE_ACCESS=true` is configured. It requires `sudo` because it changes system packages and services. It does not physically validate cameras, sensors, motor controllers, network failover, or the ROV data link.
+The provisioning script is the initial Raspberry Pi setup path. It installs Python, Node.js/npm, Nginx, Motion, curl, certificates, Git, Zsh, HyFetch, NATS Server, NetworkManager, its `dnsmasq` shared-network dependency, Avahi, and Samba from the configured Debian repositories; creates the Cockpit, Control, and Datalogger virtual environments; creates the shared `stills/`, `videos/`, and `data/csv/` directories; installs the shared robot profile at `/etc/robot/profile.json`; renders the Control, Cockpit, Datalogger, Motion, and Nginx configuration for the actual checkout paths; enables the services; and invokes Control's network deployment. NATS uses the credentials from the ignored secrets file and binds to `127.0.0.1` unless `NATS_REMOTE_ACCESS=true` is configured. It requires `sudo` because it changes system packages and services. It does not physically validate cameras, sensors, motor controllers, network failover, or the ROV data link.
+
+### Runtime-shell and sudo policy
+
+The provisioner configures the normal account that invoked `sudo` as the robot
+runtime account. It changes that account's login shell to Zsh, installs Oh My
+Zsh from its upstream Git repository when it is not already present, and sets
+`ZSH_THEME="clean"`. Existing `.zshrc` content is retained apart from the
+selected theme; a missing `.zshrc` starts from Oh My Zsh's template.
+
+The provisioner also maintains an idempotent greeting block in `.zprofile`.
+It runs `clear` and `hyfetch` only for an interactive Zsh login, so it does not
+affect systemd services, non-interactive scripts, or a non-Zsh shell. This
+implements Philip's [basic Linux setup](https://philipmcgaw.com/my-basic-linux-setup/).
+
+The same deployment deliberately writes
+`/etc/sudoers.d/90-rov-runtime-<user>` with `<user> ALL=(ALL) NOPASSWD:ALL`.
+It validates the generated policy with `visudo -cf` before installation and
+uses mode `0440`. This follows Philip's
+[passwordless-sudo setup](https://philipmcgaw.com/passwordless-sudo/), but is
+a meaningful security trade-off: anyone who can authenticate as the runtime
+user can become `root` without a password. Provision only a trusted robot or
+development machine, protect SSH access and private keys, and do not use this
+baseline for a shared or Internet-exposed host.
 
 The installed Control systemd unit grants only `CAP_SYS_TIME` for the profile-driven browser-time synchronisation feature. This allows Control, rather than Cockpit or the browser, to correct the RPi system clock. After deploying a changed Control unit, run `sudo systemctl daemon-reload` and restart Control when the robot is safe. A logged-in driver/admin Cockpit browser then provides UTC time immediately and every 60 seconds. This is not a replacement for NTP where a trusted network time service is available.
 

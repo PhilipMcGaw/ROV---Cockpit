@@ -25,13 +25,14 @@ The application layer is FastAPI served by Uvicorn. NATS is accessed only by the
 - Development sensor simulator page with runtime enable/disable control and slider-driven browser telemetry injection.
 - Profile-driven browser-assisted time relay: an authenticated driver/admin page publishes UTC Unix milliseconds to the active profile's Cockpit NATS subject on load and every 60 seconds; Control remains the sole service permitted to alter the RPi clock.
 - K9/profile-enabled right-edge soundboard drawer. It displays the active profile's sound labels and lets an authenticated driver or administrator publish the validated selected ID to the profile-owned `sound.play` NATS command. ROV and PiWars profiles do not render this drawer.
-- Shared-profile validation of Control-owned hardware adapters. K9 and PiWars now bind selected Adeept Robot HAT ADM133 functions to logical command and telemetry keys; the Control driver and all physical HAT behaviour remain planned and unbench-tested.
+- Shared-profile validation of Control-owned hardware adapters. K9 and PiWars now bind selected Adeept Robot HAT ADM133 functions to logical command and telemetry keys. K9 additionally maps the semantic aliases `head-pan` and `head-tilt` to stable `servo-00` and `servo-01` port aliases. The Control driver and all physical HAT behaviour remain planned and unbench-tested.
 - Canonical Raspberry Pi provisioning for the co-installed Cockpit, Control, and Datalogger services. It renders service, Motion, and Nginx templates for the actual checkout paths; installs authenticated NATS configuration; invokes Control-owned network, SMB, and Avahi deployment; and creates the shared media/CSV directories.
+- Canonical Raspberry Pi provisioning installs Zsh, HyFetch, and Oh My Zsh for the selected runtime user, selects the `clean` theme, and adds an interactive-login greeting. It also creates a `visudo`-validated, passwordless-sudo policy for that user; this is intentional for a trusted robot/development machine, not evidence of a hardened multi-user host.
 - Existing instruments, camera handling, media capture/download, CSV access, authentication, and Gamepad API support remain part of the application.
 
 ## Automated-test verification
 
-The standard-library documentation audit is implemented in `tests/test_documentation.py`. Python source compilation and the documentation audit can run without application dependencies. The TypeScript source and generated browser artefacts are checked during development; a complete browser build requires the frontend toolchain.
+The standard-library documentation audit is implemented in `tests/test_documentation.py`. `tests/test_raspberry_pi_provisioning.py` statically checks the provisioner's Zsh, HyFetch, Oh My Zsh, and validated-sudo-policy contract, and checks Bash syntax when Bash is available. Python source compilation and the documentation audit can run without application dependencies. The TypeScript source and generated browser artefacts are checked during development; a complete browser build requires the frontend toolchain.
 
 ## Bench-tested and Production-validated status
 
@@ -49,7 +50,8 @@ The current repository state is not recorded as bench-tested or production-valid
 - Reproducible TypeScript generation in every supported development environment.
 - Complete production authentication and authorisation hardening.
 - Raspberry Pi bench validation of browser-assisted clock synchronisation, including the deployed `CAP_SYS_TIME` systemd capability and NATS status result.
-- Raspberry Pi bench validation of the canonical provisioner, NATS service override, Wi-Fi/hotspot failover, SMB share, Motion camera configuration, and co-installed service restart behaviour.
+- Raspberry Pi 3B+ Trixie Lite 64-bit bench validation of the canonical provisioner, NATS service override, Wi-Fi/hotspot failover, SMB share, Motion camera configuration, and co-installed service restart behaviour.
+- Raspberry Pi bench validation of the runtime-user shell, Oh My Zsh installation, HyFetch greeting, and passwordless-sudo policy on a clean target image.
 - Control-side K9 sound-file resolution and speaker playback. The Cockpit drawer publishes the logical request, but it does not yet prove that a robot sound was produced.
 
 ## Important references
@@ -68,6 +70,7 @@ The current repository state is not recorded as bench-tested or production-valid
 - `src/rov_cockpit/static/dist/components/rov-depth.js`
 - `configs/nats.env.example`
 - `scripts/0_provision_raspberry_pi.sh`
+- `tests/test_raspberry_pi_provisioning.py`
 - `tests/test_k9_soundboard.py`
 - `scripts/1_install_dependencies.bat`
 - `scripts/2_start_app.bat`

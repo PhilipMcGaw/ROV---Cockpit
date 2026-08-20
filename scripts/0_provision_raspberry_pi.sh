@@ -45,6 +45,89 @@ url_encode() {
   python3 -c 'from sys import argv; from urllib.parse import quote; print(quote(argv[1], safe=""))' "$1"
 }
 
+runtime_user_home() {
+  getent passwd "$PROJECT_USER" | cut -d: -f6
+}
+
+configure_passwordless_sudo() {
+  local sudoers_file temporary user_name_pattern='^[a-z_][a-z0-9_-]*$'
+  [[ "$PROJECT_USER" =~ $user_name_pattern ]] || fail "Runtime user name is unsafe for a sudoers policy: $PROJECT_USER"
+  sudoers_file="/etc/sudoers.d/90-rov-runtime-${PROJECT_USER}"
+  temporary="$(mktemp)"
+  printf '%s ALL=(ALL) NOPASSWD:ALL\n' "$PROJECT_USER" > "$temporary"
+  if ! visudo -cf "$temporary"; then
+    rm -f "$temporary"
+    fail "Generated passwordless sudo policy is invalid for $PROJECT_USER"
+  fi
+  install -o root -g root -m 0440 "$temporary" "$sudoers_file"
+  rm -f "$temporary"
+  pass "Passwordless sudo is configured for $PROJECT_USER through $sudoers_file."
+}
+
+configure_interactive_shell() {
+  local project_user_home zsh_bin zsh_directory zshrc zprofile template temporary
+  project_user_home="$(runtime_user_home)"
+  [[ -n "$project_user_home" && -d "$project_user_home" ]] || fail "Cannot determine a valid home directory for $PROJECT_USER"
+  zsh_bin="$(command -v zsh)"
+  [[ -n "$zsh_bin" ]] || fail 'Zsh is not installed after package installation'
+  zsh_directory="$project_user_home/.oh-my-zsh"
+  zshrc="$project_user_home/.zshrc"
+  zprofile="$project_user_home/.zprofile"
+  template="$zsh_directory/templates/zshrc.zsh-template"
+
+  if [[ ! -d "$zsh_directory" ]]; then
+    runuser -u "$PROJECT_USER" -- env HOME="$project_user_home" git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$zsh_directory" || fail "Could not install Oh My Zsh for $PROJECT_USER"
+  fi
+  [[ -f "$template" ]] || fail "Oh My Zsh template is unavailable: $template"
+  usermod -s "$zsh_bin" "$PROJECT_USER"
+
+  if [[ ! -f "$zshrc" ]]; then
+    install -o "$PROJECT_USER" -g "$PROJECT_GROUP" -m 0644 "$template" "$zshrc"
+  fi
+  if grep -Eq '^ZSH_THEME=' "$zshrc"; then
+    sed -i 's|^ZSH_THEME=.*|ZSH_THEME="clean"|' "$zshrc"
+  else
+    temporary="$(mktemp)"
+    awk '
+      /oh-my-zsh\.sh/ && !theme_added { print "ZSH_THEME=\"clean\""; theme_added=1 }
+      { print }
+      END { if (!theme_added) print "ZSH_THEME=\"clean\"" }
+    ' "$zshrc" > "$temporary"
+    install -o "$PROJECT_USER" -g "$PROJECT_GROUP" -m 0644 "$temporary" "$zshrc"
+    rm -f "$temporary"
+  fi
+  if ! grep -Fq 'oh-my-zsh.sh' "$zshrc"; then
+    cat >> "$zshrc" <<'EOF'
+
+# ROV deployment: use the installed Oh My Zsh framework.
+export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
+source "$ZSH/oh-my-zsh.sh"
+EOF
+  fi
+  chown "$PROJECT_USER:$PROJECT_GROUP" "$zshrc"
+  chmod 0644 "$zshrc"
+
+  temporary="$(mktemp)"
+  if [[ -f "$zprofile" ]]; then
+    sed '/^# BEGIN ROV deployment shell greeting$/,/^# END ROV deployment shell greeting$/d' "$zprofile" > "$temporary"
+  fi
+  cat >> "$temporary" <<'EOF'
+
+# BEGIN ROV deployment shell greeting
+# Show the host identity only for an interactive Zsh login.
+if [[ -o interactive ]]; then
+  clear
+  if (( $+commands[hyfetch] )); then
+    hyfetch
+  fi
+fi
+# END ROV deployment shell greeting
+EOF
+  install -o "$PROJECT_USER" -g "$PROJECT_GROUP" -m 0644 "$temporary" "$zprofile"
+  rm -f "$temporary"
+  pass "Zsh, Oh My Zsh clean theme, and interactive HyFetch greeting are configured for $PROJECT_USER."
+}
+
 install_nats_configuration() {
   local nats_bind_address nats_service_user nats_service_group nats_binary temporary url_user url_password
   [[ -r "$NATS_CONFIG_FILE" ]] || fail "NATS configuration is missing: $NATS_CONFIG_FILE. Copy configs/nats.env.example to configs/nats.env and review it."
@@ -115,7 +198,7 @@ info "Refreshing Debian package metadata."
 apt-get update || fail "apt-get update failed. Check network access, repository configuration, and system time."
 
 info "Checking that all required platform packages are available before installation."
-PACKAGES=(python3 python3-venv python3-dev nodejs npm nginx motion curl ca-certificates nats-server network-manager dnsmasq-base avahi-daemon samba)
+PACKAGES=(python3 python3-venv python3-dev nodejs npm nginx motion curl ca-certificates git zsh hyfetch nats-server network-manager dnsmasq-base avahi-daemon samba)
 for package in "${PACKAGES[@]}"; do
   apt-cache show "$package" >/dev/null 2>&1 || fail "Required package is unavailable in the configured repositories: $package. Add a trusted repository or install this dependency using the documented vendor method before rerunning. No partial service configuration was attempted."
 done
@@ -132,6 +215,7 @@ else
   PROJECT_USER="$(stat -c '%U' "$PROJECT_ROOT")"
 fi
 id "$PROJECT_USER" >/dev/null 2>&1 || fail "The selected runtime user does not exist: $PROJECT_USER"
+[[ "$PROJECT_USER" != root ]] || fail 'Provision from a normal user account; root is not a supported robot runtime user.'
 PROJECT_GROUP="$(id -gn "$PROJECT_USER")"
 if [[ ! -d "$PROJECT_ROOT/.venv" ]]; then
   runuser -u "$PROJECT_USER" -- python3 -m venv "$PROJECT_ROOT/.venv" || fail "Could not create $PROJECT_ROOT/.venv for $PROJECT_USER. Check repository ownership and Python venv support."
@@ -216,7 +300,11 @@ systemctl is-active --quiet nginx || fail "Nginx is not active after provisionin
 systemctl is-active --quiet nats-server || fail "NATS Server is not active after provisioning. Inspect: journalctl -u nats-server -n 50 --no-pager"
 pass "Control, Cockpit, Datalogger, Nginx and NATS Server are active."
 
+info "Configuring the runtime user's Zsh environment and administrator policy."
+configure_interactive_shell
+configure_passwordless_sudo
+
 echo "[INFO] Environment summary:"
-echo "[INFO] Python=installed and configured; Nginx=installed, configured and active; Motion=installed and enabled; NATS Server=authenticated, enabled and active; Cockpit=installed, enabled and active; Datalogger=installed, enabled and active; CSV export=shared with Cockpit media/SMB."
+echo "[INFO] Python=installed and configured; Nginx=installed, configured and active; Motion=installed and enabled; NATS Server=authenticated, enabled and active; Cockpit=installed, enabled and active; Datalogger=installed, enabled and active; CSV export=shared with Cockpit media/SMB; runtime shell=Zsh with Oh My Zsh clean theme and HyFetch."
 echo "[WARN] Hardware cameras, motor controllers, sensors, network links and ROV operation are not physically validated by this script."
 echo "[INFO] Provisioning completed at $TIMESTAMP."
